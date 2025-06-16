@@ -20,7 +20,7 @@ fun TransactionItem(title: String, amount: Double, date: String) {
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (amount < 0) Color(0xFFFFE5E5) else Color(0xFFE5FFE5) // ✅ Usa Double
+            containerColor = if (amount < 0) Color(0xFFFFE5E5) else Color(0xFFE5FFE5)
         )
     ) {
         Row(
@@ -38,61 +38,3 @@ fun TransactionItem(title: String, amount: Double, date: String) {
         }
     }
 }
-
-/*@Composable
-fun TransactionItem(title: String, amount: String, date: String) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (amount < 0) Color(0xFFFFE5E5) else Color(0xFFE5FFE5)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(title, style = MaterialTheme.typography.bodyLarge)
-                Text(date, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-            }
-            Text(
-                text = (if (amount >= 0) "+" else "") + "$${"%.2f".format(amount)}",
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (amount < 0) Color.Red else Color(0xFF2E7D32)
-            )
-        }
-    }
-}*/
-
-
-/*@Composable
-fun TransactionItem(tx: Transaction) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (tx.amount < 0) Color(0xFFFFE5E5) else Color(0xFFE5FFE5)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(tx.title, style = MaterialTheme.typography.bodyLarge)
-                Text(tx.date, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-            }
-            Text(
-                (if (tx.amount > 0) "+" else "") + "$${"%.2f".format(tx.amount)}",
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (tx.amount < 0) Color.Red else Color(0xFF2E7D32)
-            )
-        }
-    }
-}*/

@@ -14,7 +14,7 @@ class TransactionViewModel(application: Application) : AndroidViewModel(applicat
     private val dao = AppDatabase.getInstance(application).transactionDao()
 
     val transactions = dao.getAll()
-        .map { it } // podrías mapear a modelos UI si lo deseas
+        .map { it }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addTransaction(title: String, amount: Double, date: String) {
