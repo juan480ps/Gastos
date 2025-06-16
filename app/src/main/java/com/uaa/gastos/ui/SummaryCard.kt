@@ -12,8 +12,8 @@ import java.util.*
 @Composable
 fun SummaryCard(balance: Double) {
     val numberFormat = NumberFormat.getNumberInstance(Locale.US).apply {
-        minimumFractionDigits = 2
-        maximumFractionDigits = 2
+        minimumFractionDigits = 0
+        maximumFractionDigits = 0
     }
     val formattedBalance = numberFormat.format(balance)
 
