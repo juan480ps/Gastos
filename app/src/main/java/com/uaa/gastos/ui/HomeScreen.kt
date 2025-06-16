@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import com.uaa.gastos.data.TransactionEntity
 import java.text.NumberFormat
 import java.util.*
+import com.uaa.gastos.model.Transaction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,12 +62,8 @@ fun HomeScreen(navController: NavController, viewModel: TransactionViewModel = v
             LazyColumn {
                 items(transactions) { tx ->
                     TransactionItem(
-                        title = tx.title,
-                        amount = tx.amount,
-                        date = tx.date,
-                        onDelete = {
-                            viewModel.deleteTransaction(tx.id)
-                        }
+                        transaction = tx,
+                        onDelete = { viewModel.deleteTransaction(tx.id) }
                     )
                 }
             }

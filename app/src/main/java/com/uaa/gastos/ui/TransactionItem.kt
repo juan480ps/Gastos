@@ -11,48 +11,43 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import java.text.NumberFormat
 import java.util.Locale
+import com.uaa.gastos.model.Transaction
 
 
 @Composable
-fun TransactionItem(title: String,
-                    amount: Double,
-                    date: String,
-                    onDelete: () -> Unit) {
+fun TransactionItem(
+    transaction: Transaction,
+    onDelete: () -> Unit
+) {
     val numberFormat = NumberFormat.getNumberInstance(Locale.US)
-    val formattedAmount = numberFormat.format(amount)
+    val formattedAmount = numberFormat.format(transaction.amount)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (amount < 0) Color(0xFFFFE5E5) else Color(0xFFE5FFE5)
+            containerColor = if (transaction.amount < 0) Color(0xFFFFE5E5) else Color(0xFFE5FFE5)
         )
     ) {
-        /*Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(text = title)
-                Text(text = date, style = MaterialTheme.typography.bodySmall)
-            }
-            Text(
-                text = "$ $formattedAmount",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }*/
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "$ $formattedAmount",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(text = transaction.title)
+                    Text(text = transaction.date, style = MaterialTheme.typography.bodySmall)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "$ $formattedAmount",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                    }
+                }
             }
         }
     }

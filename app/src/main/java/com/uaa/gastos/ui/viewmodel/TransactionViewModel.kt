@@ -15,8 +15,16 @@ class TransactionViewModel(application: Application) : AndroidViewModel(applicat
     private val dao = AppDatabase.getInstance(application).transactionDao()
 
     val transactions = dao.getAll()
-//        .map { it }
-        .map { list -> list.map { Transaction(it.id, it.title, it.amount, it.date) } }
+        .map { list ->
+            list.map {
+                Transaction(
+                    id = it.id,
+                    title = it.title,
+                    amount = it.amount,
+                    date = it.date
+                )
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addTransaction(title: String, amount: Double, date: String) {

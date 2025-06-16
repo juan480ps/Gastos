@@ -3,6 +3,8 @@ package com.uaa.gastos.ui
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,19 +27,39 @@ fun AddTransactionScreen(navController: NavController, viewModel: TransactionVie
     val numberFormat = NumberFormat.getNumberInstance(Locale.US)
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Agregar Gasto") }) }
+//        topBar = { TopAppBar(title = { Text("Agregar Gasto") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Agregar Gasto") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Descripción") })
+            OutlinedTextField(value = title,
+                onValueChange = { title = it },
+                label = { Text("Descripción") },
+                modifier = Modifier.fillMaxWidth()
+            )
 //            OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Monto") })
             OutlinedTextField(
                 value = amount,
                 onValueChange = { input ->
-                    val cleanedInput = input.replace(",", "").filter { it.isDigit() || it == '.' }
+//                    val cleanedInput = input.replace(",", "").filter { it.isDigit() || it == '.' }
+                    val cleanedInput = input.replace(",", "").filterIndexed { index, c ->
+                        c.isDigit() || c == '.' || (c == '-' && index == 0)
+                    }
                     rawAmount = cleanedInput
 
                     val formatted = try {
@@ -51,7 +73,8 @@ fun AddTransactionScreen(navController: NavController, viewModel: TransactionVie
 
                     amount = formatted
                 },
-                label = { Text("Monto") }
+                label = { Text("Monto") },
+                modifier = Modifier.fillMaxWidth()
             )
             Button(onClick = {
                 viewModel.addTransaction(
