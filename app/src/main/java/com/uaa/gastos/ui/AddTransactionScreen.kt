@@ -16,6 +16,8 @@ import com.uaa.gastos.Routes
 import com.uaa.gastos.ui.viewmodel.TransactionViewModel
 import java.text.NumberFormat
 import java.util.*
+import kotlinx.coroutines.launch
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,11 +25,13 @@ import java.util.*
 fun AddTransactionScreen(navController: NavController, viewModel: TransactionViewModel = viewModel()) {
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    var rawAmount by remember { mutableStateOf("") } // Mantiene el número sin formato
+    var rawAmount by remember { mutableStateOf("") }
+    var showError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
     val numberFormat = NumberFormat.getNumberInstance(Locale.US)
 
     Scaffold(
-//        topBar = { TopAppBar(title = { Text("Agregar Gasto") }) }
         topBar = {
             TopAppBar(
                 title = { Text("Agregar Gasto") },
@@ -45,18 +49,20 @@ fun AddTransactionScreen(navController: NavController, viewModel: TransactionVie
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedTextField(value = title,
+            OutlinedTextField(
+                value = title,
                 onValueChange = { title = it },
                 label = { Text("Descripción") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = showError && title.isBlank()
             )
-//            OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Monto") })
+
             OutlinedTextField(
                 value = amount,
                 onValueChange = { input ->
-//                    val cleanedInput = input.replace(",", "").filter { it.isDigit() || it == '.' }
                     val cleanedInput = input.replace(",", "").filterIndexed { index, c ->
                         c.isDigit() || c == '.' || (c == '-' && index == 0)
                     }
@@ -74,16 +80,40 @@ fun AddTransactionScreen(navController: NavController, viewModel: TransactionVie
                     amount = formatted
                 },
                 label = { Text("Monto") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = showError && (rawAmount.toDoubleOrNull() ?: 0.0) == 0.0
             )
-            Button(onClick = {
-                viewModel.addTransaction(
-                    title = title,
-//                    amount = amount.toDoubleOrNull() ?: 0.0,
-                    amount = rawAmount.toDoubleOrNull() ?: 0.0,
-                    date = java.time.LocalDate.now().toString()
+
+            if (showError) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
-                navController.popBackStack()
+            }
+
+            Button(onClick = {
+                val parsedAmount = rawAmount.toDoubleOrNull() ?: 0.0
+
+                when {
+                    title.isBlank() -> {
+                        errorMessage = "La descripción no puede estar vacía."
+                        showError = true
+                    }
+                    parsedAmount == 0.0 -> {
+                        errorMessage = "El monto no puede ser cero."
+                        showError = true
+                    }
+                    else -> {
+                        showError = false
+                        viewModel.addTransaction(
+                            title = title,
+                            amount = parsedAmount,
+                            date = java.time.LocalDate.now().toString()
+                        )
+                        navController.popBackStack()
+                    }
+                }
             }) {
                 Text("Guardar")
             }
