@@ -15,6 +15,7 @@ import androidx.navigation.NavController
 import com.uaa.gastos.Routes
 import com.uaa.gastos.ui.viewmodel.TransactionViewModel
 import androidx.compose.runtime.getValue
+import com.uaa.gastos.data.TransactionEntity
 import java.text.NumberFormat
 import java.util.*
 
@@ -47,12 +48,25 @@ fun HomeScreen(navController: NavController, viewModel: TransactionViewModel = v
             Spacer(modifier = Modifier.height(24.dp))
             Text("Transacciones recientes")
 
-            LazyColumn {
+            /*LazyColumn {
                 items(transactions) { tx ->
                     TransactionItem(
                         title = tx.title,
                         amount = tx.amount,
                         date = tx.date
+                    )
+                }
+            }*/
+
+            LazyColumn {
+                items(transactions) { tx ->
+                    TransactionItem(
+                        title = tx.title,
+                        amount = tx.amount,
+                        date = tx.date,
+                        onDelete = {
+                            viewModel.deleteTransaction(tx.id)
+                        }
                     )
                 }
             }
