@@ -32,7 +32,7 @@ fun SummaryCard(balance: Double) {
             Text("Balance Total", style = MaterialTheme.typography.titleSmall)
             Text(
 //                "$${"%.2f".format(balance)}",
-                "$$formattedBalance",
+                "PYG $formattedBalance",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )

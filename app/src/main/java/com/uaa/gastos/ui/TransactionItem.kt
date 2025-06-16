@@ -29,6 +29,12 @@ fun TransactionItem(
     val formattedAmount = numberFormat.format(transaction.amount)
     var expanded by remember { mutableStateOf(false) }
 
+    val isIncome = transaction.amount >= 0
+
+    val incomeColor = Color(0xFF1B5E20)
+    val expenseColor = Color(0xFFB71C1C)
+    val amountColor = if (isIncome) incomeColor else expenseColor
+
     val arrowRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         animationSpec = tween(durationMillis = 300),
@@ -40,7 +46,7 @@ fun TransactionItem(
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (transaction.amount < 0) Color(0xFFFFE5E5) else Color(0xFFE5FFE5)
+            containerColor = if (isIncome) Color(0xFFE5FFE5) else Color(0xFFFFE5E5)
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -50,12 +56,14 @@ fun TransactionItem(
             ) {
                 Column {
                     Text(
-                        text = transaction.title,
-                        style = MaterialTheme.typography.bodyLarge
+                        text = (if (isIncome) "Ingreso" else "Egreso"), // transaction.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = amountColor
                     )
                     Text(
-                        text = "$ $formattedAmount",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "PYG $formattedAmount",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = amountColor
                     )
                 }
 
@@ -78,11 +86,18 @@ fun TransactionItem(
                 enter = expandVertically(animationSpec = tween(300)) + fadeIn(),
                 exit = shrinkVertically(animationSpec = tween(300)) + fadeOut()
             ) {
-                Text(
-                    text = "Fecha: ${transaction.date}",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    Text(
+                        text = "Descripción: ${transaction.title}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = amountColor
+                    )
+                    Text(
+                        text = "Fecha: ${transaction.date}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = amountColor
+                    )
+                }
             }
         }
     }
