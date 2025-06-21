@@ -1,12 +1,14 @@
 package com.uaa.gastos.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "transactions")
-data class TransactionEntity(
+@Entity(
+    tableName = "categories",
+    indices = [Index(value = ["name"], unique = true)]
+)
+data class CategoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val title: String,
-    val amount: Double,
-    val date: String
+    val name: String
 )

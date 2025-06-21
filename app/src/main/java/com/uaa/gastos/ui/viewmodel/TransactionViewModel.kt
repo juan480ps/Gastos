@@ -6,46 +6,52 @@ import androidx.lifecycle.viewModelScope
 import com.uaa.gastos.data.AppDatabase
 import com.uaa.gastos.data.TransactionEntity
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.uaa.gastos.model.Transaction
 
 class TransactionViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = AppDatabase.getInstance(application).transactionDao()
+    private val transactionDao = AppDatabase.getInstance(application).transactionDao()
+    private val categoryDao = AppDatabase.getInstance(application).categoryDao() // Nuevo
 
-    val transactions = dao.getAll()
-        .map { list ->
-            list.map {
+    val transactions: StateFlow<List<Transaction>> = transactionDao.getAll()
+        .map { entityList ->
+            entityList.map { entity ->
+                val categoryName = entity.categoryId?.let { catId ->
+                    categoryDao.getCategoryNameById(catId)
+                } ?: "Sin Categoría"
                 Transaction(
-                    id = it.id,
-                    title = it.title,
-                    amount = it.amount,
-                    date = it.date
+                    id = entity.id,
+                    title = entity.title,
+                    amount = entity.amount,
+                    date = entity.date,
+                    categoryId = entity.categoryId,
+                    categoryName = categoryName
                 )
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
-    fun addTransaction(title: String, amount: Double, date: String) {
+    fun addTransaction(title: String, amount: Double, date: String, categoryId: Int?) { // Modificado
         viewModelScope.launch {
-            dao.insert(TransactionEntity(title = title, amount = amount, date = date))
+            val transaction = TransactionEntity(
+                title = title,
+                amount = amount,
+                date = date,
+                categoryId = categoryId // Modificado
+            )
+            transactionDao.insert(transaction)
         }
     }
-
-//    fun deleteTransaction(transaction: TransactionEntity) {
-//        viewModelScope.launch {
-//            dao.delete(transaction)
-//        }
-//    }
 
     fun deleteTransaction(id: Int) {
         viewModelScope.launch {
-            val transactionToDelete = dao.getById(id)
+            val transactionToDelete = transactionDao.getById(id)
             transactionToDelete?.let {
-                dao.delete(it)
+                transactionDao.delete(it)
             }
         }
     }
-
 }

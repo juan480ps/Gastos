@@ -11,8 +11,8 @@ import java.util.*
 
 @Composable
 fun SummaryCard(balance: Double) {
-    val numberFormat = NumberFormat.getNumberInstance(Locale.US).apply {
-        minimumFractionDigits = 0
+    // Usar formato de moneda para PYG, sin decimales
+    val numberFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply {
         maximumFractionDigits = 0
     }
     val formattedBalance = numberFormat.format(balance)
@@ -20,8 +20,9 @@ fun SummaryCard(balance: Double) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+            .height(120.dp), // Puedes ajustar la altura
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant) // Color un poco diferente
     ) {
         Column(
             Modifier
@@ -29,12 +30,17 @@ fun SummaryCard(balance: Double) {
                 .fillMaxSize(),
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Balance Total", style = MaterialTheme.typography.titleSmall)
             Text(
-//                "$${"%.2f".format(balance)}",
-                "PYG $formattedBalance",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                "Balance Total",
+                style = MaterialTheme.typography.titleMedium, // Un poco más grande
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                // "PYG $formattedBalance", // El formato de moneda ya incluye "₲"
+                formattedBalance,
+                style = MaterialTheme.typography.headlineMedium, // Un poco más grande
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

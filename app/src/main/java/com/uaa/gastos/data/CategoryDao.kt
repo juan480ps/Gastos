@@ -4,16 +4,22 @@ import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface TransactionDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(transaction: TransactionEntity)
+interface CategoryDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE) // IGNORE si el nombre ya existe (debido al índice único)
+    suspend fun insert(category: CategoryEntity): Long // Devuelve el rowId, -1 si se ignora
+
+    @Query("SELECT * FROM categories ORDER BY name ASC")
+    fun getAll(): Flow<List<CategoryEntity>>
+
+    @Query("SELECT * FROM categories WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Int): CategoryEntity?
+
+    @Query("SELECT name FROM categories WHERE id = :id LIMIT 1")
+    suspend fun getCategoryNameById(id: Int): String?
 
     @Delete
-    suspend fun delete(transaction: TransactionEntity)
+    suspend fun delete(category: CategoryEntity)
 
-    @Query("SELECT * FROM transactions ORDER BY id DESC")
-    fun getAll(): Flow<List<TransactionEntity>>
-
-    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
-    suspend fun getById(id: Int): TransactionEntity?
+    @Query("UPDATE categories SET name = :newName WHERE id = :id")
+    suspend fun update(id: Int, newName: String) // Opcional: para editar categorías
 }
