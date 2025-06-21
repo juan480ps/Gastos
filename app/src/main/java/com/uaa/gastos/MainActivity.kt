@@ -4,61 +4,32 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels // Para obtener ViewModels a nivel de Activity
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope // Para lanzar coroutines
 import androidx.navigation.compose.rememberNavController
-import com.uaa.gastos.ui.HomeScreen
 import com.uaa.gastos.ui.theme.GastosTheme
-
-/*class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            GastosTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
-        }
-    }
-}*/
+import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel // Importar ViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    // Obtener el ViewModel a nivel de Activity
+    private val recurringTransactionViewModel: RecurringTransactionViewModel by viewModels()
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Procesar transacciones recurrentes al inicio
+        lifecycleScope.launch { // Usar lifecycleScope para coroutines ligadas al ciclo de vida de la Activity
+            recurringTransactionViewModel.processDueRecurringTransactions()
+        }
+
         setContent {
             GastosTheme {
                 val navController = rememberNavController()
                 AppNavigation(navController = navController)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    GastosTheme {
-        Greeting("Android")
     }
 }

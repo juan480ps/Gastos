@@ -29,6 +29,9 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
+import androidx.compose.material.icons.filled.Autorenew // Nuevo icono para recurrentes
+import androidx.compose.runtime.LaunchedEffect
+import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,7 +39,8 @@ import java.util.*
 fun HomeScreen(
     navController: NavController,
     transactionViewModel: TransactionViewModel = viewModel(),
-    budgetViewModel: BudgetViewModel = viewModel()
+    budgetViewModel: BudgetViewModel = viewModel(),
+            recurringTransactionViewModel: RecurringTransactionViewModel = viewModel()
 ) {
     val transactions by transactionViewModel.transactions.collectAsState()
     val budgetsWithSpending by budgetViewModel.budgetsWithSpendingForCurrentMonth.collectAsState(initial = emptyList())
@@ -47,11 +51,19 @@ fun HomeScreen(
     }
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
 
+    // Procesar transacciones recurrentes al iniciar la pantalla (o en MainActivity)
+    LaunchedEffect(Unit) {
+        recurringTransactionViewModel.processDueRecurringTransactions()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Mis Gastos") },
                 actions = {
+                    IconButton(onClick = { navController.navigate(Routes.MANAGE_RECURRING_TRANSACTIONS) }) { // Nuevo
+                        Icon(Icons.Filled.Autorenew, contentDescription = "Gestionar Recurrentes")
+                    }
                     IconButton(onClick = { navController.navigate(Routes.MANAGE_BUDGETS) }) {
                         Icon(Icons.Filled.Assessment, contentDescription = "Gestionar Presupuestos")
                     }
