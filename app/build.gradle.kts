@@ -70,4 +70,7 @@ dependencies {
 
     // animacion
     implementation("androidx.compose.animation:animation:1.6.0")
+
+    // iconos
+    implementation("androidx.compose.material:material-icons-extended")
 }

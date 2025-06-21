@@ -1,40 +1,62 @@
 package com.uaa.gastos.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Assessment // Nuevo icono para presupuestos
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.uaa.gastos.Routes
+import com.uaa.gastos.model.Budget // Necesario para BudgetListItem
+import com.uaa.gastos.ui.viewmodel.BudgetViewModel // Nuevo ViewModel
 import com.uaa.gastos.ui.viewmodel.TransactionViewModel
-import androidx.compose.runtime.getValue
-// Comentado TransactionEntity ya que ahora usamos el modelo Transaction
-// import com.uaa.gastos.data.TransactionEntity
 import java.text.NumberFormat
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.*
-// import com.uaa.gastos.model.Transaction // Ya estaba
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, viewModel: TransactionViewModel = viewModel()) {
-    val transactions by viewModel.transactions.collectAsState()
-    // val numberFormat = NumberFormat.getNumberInstance(Locale.US) // No se usa aquí directamente
+fun HomeScreen(
+    navController: NavController,
+    transactionViewModel: TransactionViewModel = viewModel(),
+    budgetViewModel: BudgetViewModel = viewModel()
+) {
+    val transactions by transactionViewModel.transactions.collectAsState()
+    val budgetsWithSpending by budgetViewModel.budgetsWithSpendingForCurrentMonth.collectAsState(initial = emptyList())
+    val currentYearMonth by budgetViewModel.currentMonthYear.collectAsState()
+
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply {
+        maximumFractionDigits = 0
+    }
+    val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Mis Gastos") },
-                actions = { // Nuevo: Botón para ir a Categorías
+                actions = {
+                    IconButton(onClick = { navController.navigate(Routes.MANAGE_BUDGETS) }) {
+                        Icon(Icons.Filled.Assessment, contentDescription = "Gestionar Presupuestos")
+                    }
                     IconButton(onClick = { navController.navigate(Routes.CATEGORIES_LIST) }) {
-                        Icon(Icons.Filled.List, contentDescription = "Gestionar Categorías")
+                        Icon(Icons.Filled.Category, contentDescription = "Gestionar Categorías")
                     }
                 }
             )
@@ -50,30 +72,104 @@ fun HomeScreen(navController: NavController, viewModel: TransactionViewModel = v
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp) // Ajustado padding
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // val balance = transactions.sumOf { it.amount } // Se calcula en SummaryCard
-            // val formattedBalance = numberFormat.format(balance) // Se formatea en SummaryCard
             SummaryCard(balance = transactions.sumOf { it.amount })
 
-            Spacer(modifier = Modifier.height(16.dp)) // Ajustado spacer
-            Text("Transacciones recientes", style = MaterialTheme.typography.titleMedium) // Estilo
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sección de Resumen de Presupuestos
+            Text(
+                "Resumen de Presupuestos (${currentYearMonth.format(monthDisplayFormatter).replaceFirstChar { it.uppercase() }})",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            if (budgetsWithSpending.any { it.amount > 0 }) { // Mostrar solo si hay algún presupuesto configurado
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 240.dp), // Limitar altura para que no ocupe toda la pantalla
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(budgetsWithSpending.filter { it.amount > 0 }) { budgetItem -> // Solo los que tienen presupuesto
+                        BudgetStatusItem(budgetItem, currencyFormat)
+                    }
+                }
+            } else {
+                Text(
+                    "No hay presupuestos configurados para este mes. Ve a 'Gestionar Presupuestos'.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Transacciones Recientes", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
 
             if (transactions.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize().padding(top = 20.dp), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text("No hay transacciones registradas.")
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { // Añadido espaciado
-                    items(transactions) { tx ->
+                // Limitar la altura de la lista de transacciones si la de presupuestos es larga
+                LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+                    items(transactions.take(10)) { tx -> // Mostrar solo las últimas 10, por ejemplo
                         TransactionItem(
                             transaction = tx,
-                            onDelete = { viewModel.deleteTransaction(tx.id) }
+                            onDelete = { transactionViewModel.deleteTransaction(tx.id) }
                         )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun BudgetStatusItem(budget: Budget, currencyFormat: NumberFormat) {
+    val progressColor = when {
+        budget.progress > 1f -> MaterialTheme.colorScheme.error
+        budget.progress > 0.85f -> Color(0xFFFFA000) // Naranja
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(budget.categoryName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${currencyFormat.format(budget.spentAmount)} / ${currencyFormat.format(budget.amount)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (budget.spentAmount > budget.amount) progressColor else LocalContentColor.current
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { budget.progress.coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth(),
+            color = progressColor,
+            trackColor = progressColor.copy(alpha = 0.3f)
+        )
+        if (budget.progress > 1f) {
+            Text(
+                "Excedido en ${currencyFormat.format(budget.spentAmount - budget.amount)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = progressColor,
+                modifier = Modifier.align(Alignment.End)
+            )
+        } else if (budget.progress > 0.85f) {
+            Text(
+                "¡Cuidado! Cercano al límite.",
+                style = MaterialTheme.typography.bodySmall,
+                color = progressColor,
+                modifier = Modifier.align(Alignment.End)
+            )
         }
     }
 }
