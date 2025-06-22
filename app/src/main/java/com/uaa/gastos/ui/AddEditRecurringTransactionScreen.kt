@@ -36,7 +36,7 @@ import java.util.*
 @Composable
 fun AddEditRecurringTransactionScreen(
     navController: NavController,
-    recurringTransactionId: Int? = null, // Null para añadir, ID para editar
+    recurringTransactionId: Int? = null,
     recurringViewModel: RecurringTransactionViewModel = viewModel(),
     categoryViewModel: CategoryViewModel = viewModel()
 ) {
@@ -46,15 +46,12 @@ fun AddEditRecurringTransactionScreen(
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     val categories by categoryViewModel.categories.collectAsState()
-
     var recurrenceType by remember { mutableStateOf(RecurrenceType.MONTHLY) }
-    var dayOfMonth by remember { mutableStateOf(LocalDate.now().dayOfMonth.toString()) } // Default to current day
+    var dayOfMonth by remember { mutableStateOf(LocalDate.now().dayOfMonth.toString()) }
     var startDate by remember { mutableStateOf(LocalDate.now()) }
     var endDate by remember { mutableStateOf<LocalDate?>(null) }
     var isActive by remember { mutableStateOf(true) }
-
     var screenTitle by remember { mutableStateOf("Añadir Recurrente") }
-
     val dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale("es", "ES"))
 
     LaunchedEffect(key1 = recurringTransactionId) {
@@ -110,7 +107,6 @@ fun AddEditRecurringTransactionScreen(
                 singleLine = true
             )
 
-            // Selector de Categoría
             ExposedDropdownMenuBox(
                 expanded = categoryDropdownExpanded,
                 onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
@@ -140,7 +136,6 @@ fun AddEditRecurringTransactionScreen(
                 }
             }
 
-            // Tipo de Recurrencia (Por ahora solo mensual, se podría expandir)
             Text("Tipo de Recurrencia: Mensual", style = MaterialTheme.typography.bodyLarge)
 
             OutlinedTextField(
@@ -152,7 +147,6 @@ fun AddEditRecurringTransactionScreen(
                 singleLine = true
             )
 
-            // Fecha de Inicio
             DatePickerField(
                 label = "Fecha de Inicio",
                 selectedDate = startDate,
@@ -160,7 +154,6 @@ fun AddEditRecurringTransactionScreen(
                 dateFormat = dateFormat
             )
 
-            // Fecha de Fin (Opcional)
             DatePickerField(
                 label = "Fecha de Fin (Opcional)",
                 selectedDate = endDate,
@@ -174,7 +167,6 @@ fun AddEditRecurringTransactionScreen(
                 Checkbox(checked = isActive, onCheckedChange = { isActive = it })
                 Text("Activa")
             }
-
 
             Button(
                 onClick = {
@@ -213,7 +205,6 @@ fun AddEditRecurringTransactionScreen(
     }
 }
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DatePickerField(
@@ -251,9 +242,9 @@ fun DatePickerField(
                 if (isOptional && selectedDate != null && onClearDate != null) {
                     IconButton(onClick = {
                         onClearDate()
-                        datePickerDialog.dismiss() // Asegurarse que se cierre si estaba abierto
+                        datePickerDialog.dismiss()
                     }) {
-                        Icon(Icons.Filled.ArrowBack, "Limpiar fecha") // Usar un icono de "clear" sería mejor
+                        Icon(Icons.Filled.ArrowBack, "Limpiar fecha")
                     }
                 }
                 IconButton(onClick = { datePickerDialog.show() }) {

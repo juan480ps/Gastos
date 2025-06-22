@@ -12,15 +12,14 @@ import androidx.room.PrimaryKey
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.CASCADE // Si se borra una categoría, se borran sus presupuestos
+            onDelete = ForeignKey.CASCADE
         )
     ],
-    // Asegura que solo haya un presupuesto por categoría para un mes/año específico
     indices = [Index(value = ["categoryId", "monthYear"], unique = true)]
 )
 data class BudgetEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val categoryId: Int,
-    val monthYear: String, // Formato "YYYY-MM", ej: "2023-10"
+    val monthYear: String,
     val amount: Double
 )

@@ -14,7 +14,7 @@ import com.uaa.gastos.model.Transaction
 
 class TransactionViewModel(application: Application) : AndroidViewModel(application) {
     private val transactionDao = AppDatabase.getInstance(application).transactionDao()
-    private val categoryDao = AppDatabase.getInstance(application).categoryDao() // Nuevo
+    private val categoryDao = AppDatabase.getInstance(application).categoryDao()
 
     val transactions: StateFlow<List<Transaction>> = transactionDao.getAll()
         .map { entityList ->
@@ -34,13 +34,13 @@ class TransactionViewModel(application: Application) : AndroidViewModel(applicat
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
-    fun addTransaction(title: String, amount: Double, date: String, categoryId: Int?) { // Modificado
+    fun addTransaction(title: String, amount: Double, date: String, categoryId: Int?) {
         viewModelScope.launch {
             val transaction = TransactionEntity(
                 title = title,
                 amount = amount,
                 date = date,
-                categoryId = categoryId // Modificado
+                categoryId = categoryId
             )
             transactionDao.insert(transaction)
         }

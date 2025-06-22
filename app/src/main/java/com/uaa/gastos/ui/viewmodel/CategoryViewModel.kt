@@ -29,7 +29,7 @@ class CategoryViewModel(application: Application) : AndroidViewModel(application
                     onError("La categoría '$name' ya existe.")
                 } else {
                     val result = categoryDao.insert(CategoryEntity(name = name))
-                    if (result != -1L) { // -1L indica que no se insertó (por conflicto IGNORE)
+                    if (result != -1L) {
                         onSuccess()
                     } else {
                         onError("No se pudo guardar la categoría. Puede que ya exista.")

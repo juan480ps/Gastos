@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoryDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE) // IGNORE si el nombre ya existe (debido al índice único)
-    suspend fun insert(category: CategoryEntity): Long // Devuelve el rowId, -1 si se ignora
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(category: CategoryEntity): Long
 
     @Query("SELECT * FROM categories ORDER BY name ASC")
     fun getAll(): Flow<List<CategoryEntity>>
@@ -21,5 +21,5 @@ interface CategoryDao {
     suspend fun delete(category: CategoryEntity)
 
     @Query("UPDATE categories SET name = :newName WHERE id = :id")
-    suspend fun update(id: Int, newName: String) // Opcional: para editar categorías
+    suspend fun update(id: Int, newName: String)
 }

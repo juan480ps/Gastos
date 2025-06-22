@@ -22,25 +22,20 @@ import java.util.*
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun TransactionItem(
-    transaction: Transaction, // Ya recibe el modelo Transaction que tiene categoryName
+    transaction: Transaction,
     onDelete: () -> Unit
 ) {
     val numberFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply {
-        maximumFractionDigits = 0 // Para guaraníes, usualmente no se usan decimales
+        maximumFractionDigits = 0
     }
-    val formattedAmount = numberFormat.format(transaction.amount) // Formato de moneda
+    val formattedAmount = numberFormat.format(transaction.amount)
     var expanded by remember { mutableStateOf(false) }
-
     val isIncome = transaction.amount >= 0
-
-    val incomeColorText = Color(0xFF1B5E20) // Verde oscuro para texto de ingreso
-    val expenseColorText = Color(0xFFB71C1C) // Rojo oscuro para texto de egreso
+    val incomeColorText = Color(0xFF1B5E20)
+    val expenseColorText = Color(0xFFB71C1C)
     val amountColor = if (isIncome) incomeColorText else expenseColorText
-
-    // Colores de fondo más sutiles
-    val incomeBgColor = Color(0xFFE8F5E9) // Verde muy claro
-    val expenseBgColor = Color(0xFFFFEBEE) // Rojo muy claro
-
+    val incomeBgColor = Color(0xFFE8F5E9)
+    val expenseBgColor = Color(0xFFFFEBEE)
     val arrowRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         animationSpec = tween(durationMillis = 300),
@@ -60,18 +55,18 @@ fun TransactionItem(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically // Alinear verticalmente
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) { // Darle peso para que ocupe espacio disponible
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = transaction.title, // Título principal es la descripción
-                        style = MaterialTheme.typography.titleMedium, // Título un poco más grande
+                        text = transaction.title,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formattedAmount, // Monto
+                        text = formattedAmount,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = amountColor
@@ -111,7 +106,7 @@ fun TransactionItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = transaction.categoryName ?: "Sin Categoría", // Nuevo: Mostrar categoría
+                            text = transaction.categoryName ?: "Sin Categoría",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -128,12 +123,12 @@ fun TransactionItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = transaction.date, // Fecha
+                            text = transaction.date,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    // Puedes añadir más detalles aquí si es necesario
+
                 }
             }
         }

@@ -3,16 +3,13 @@ package com.uaa.gastos.ui
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +29,6 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
-
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 
@@ -45,16 +41,10 @@ fun ManageBudgetsScreen(
 ) {
 
     val budgetsWithSpending by budgetViewModel.budgetsWithSpendingForCurrentMonth.collectAsState(initial = emptyList())
-    val currentYearMonth by budgetViewModel.currentMonthYear.collectAsState() // Esta ya debería estar bien porque YearMonth.now() es el initial de StateFlow
-
-
-//    val budgetsWithSpending by budgetViewModel.budgetsWithSpendingForCurrentMonth.collectAsState()
-//    val currentYearMonth by budgetViewModel.currentMonthYear.collectAsState()
-    
+    val currentYearMonth by budgetViewModel.currentMonthYear.collectAsState()
     var showSetBudgetDialog by remember { mutableStateOf(false) }
     var selectedCategoryForBudget by remember { mutableStateOf<Budget?>(null) }
     val context = LocalContext.current
-
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
 
     Scaffold(
@@ -82,7 +72,6 @@ fun ManageBudgetsScreen(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
             )
-
             if (budgetsWithSpending.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No hay categorías para presupuestar o no hay categorías creadas.")
@@ -101,7 +90,6 @@ fun ManageBudgetsScreen(
                 }
             }
         }
-
         if (showSetBudgetDialog && selectedCategoryForBudget != null) {
             SetBudgetDialog(
                 budgetInfo = selectedCategoryForBudget!!,
@@ -147,7 +135,6 @@ fun MonthNavigator(
     }
 }
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BudgetListItem(budget: Budget, onEditClick: () -> Unit) {
@@ -155,11 +142,10 @@ fun BudgetListItem(budget: Budget, onEditClick: () -> Unit) {
         maximumFractionDigits = 0
     }
     val progressColor = when {
-        budget.progress > 1f -> MaterialTheme.colorScheme.error // Excedido
-        budget.progress > 0.85f -> Color(0xFFFFA000) // Naranja para advertencia (cercano)
-        else -> MaterialTheme.colorScheme.primary // Normal
+        budget.progress > 1f -> MaterialTheme.colorScheme.error
+        budget.progress > 0.85f -> Color(0xFFFFA000)
+        else -> MaterialTheme.colorScheme.primary
     }
-
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -182,7 +168,7 @@ fun BudgetListItem(budget: Budget, onEditClick: () -> Unit) {
                 )
                 if (budget.amount > 0) {
                     LinearProgressIndicator(
-                        progress = { budget.progress.coerceIn(0f, 1f) }, // Asegura que el progreso esté entre 0 y 1 para el indicador
+                        progress = { budget.progress.coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                         color = progressColor,
                         trackColor = progressColor.copy(alpha = 0.3f)
@@ -210,7 +196,7 @@ fun BudgetListItem(budget: Budget, onEditClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SetBudgetDialog(
-    budgetInfo: Budget, // Usamos Budget para tener el categoryId, categoryName y el monto actual
+    budgetInfo: Budget,
     currentMonthYear: YearMonth,
     onDismiss: () -> Unit,
     onSetBudget: (categoryId: Int, amount: Double, monthYearStr: String) -> Unit
@@ -219,7 +205,6 @@ fun SetBudgetDialog(
     val context = LocalContext.current
     val monthYearStr = currentMonthYear.format(DateTimeFormatter.ofPattern("yyyy-MM"))
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
-
 
     Dialog(onDismissRequest = onDismiss) {
         Card {
@@ -250,7 +235,6 @@ fun SetBudgetDialog(
                     singleLine = true,
                     prefix = { Text("₲ ") }
                 )
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End

@@ -1,6 +1,6 @@
 package com.uaa.gastos.ui
 
-import android.graphics.Color as AndroidColor // Para MPAndroidChart
+import android.graphics.Color as AndroidColor
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -11,30 +11,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color // Color de Compose para la leyenda si la haces manual
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-// MPAndroidChart Imports
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
-import com.github.mikephil.charting.utils.ColorTemplate
-// Tus imports
 import com.uaa.gastos.ui.viewmodel.ChartsViewModel
-import com.uaa.gastos.ui.viewmodel.PieChartData // Tu data class PieChartData
+import com.uaa.gastos.ui.viewmodel.PieChartData
 import java.text.NumberFormat
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.util.* // Para Locale
-import androidx.compose.foundation.isSystemInDarkTheme // Importante para una alternativa a isLight
-import androidx.compose.material3.MaterialTheme // Asegúrate de tener este import
+import java.util.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +40,6 @@ fun ChartsScreen(
 ) {
     val currentYearMonth by chartsViewModel.currentMonthYear.collectAsState()
     val processedPieData by chartsViewModel.processedExpensePieData.collectAsState(initial = emptyList())
-
     val monthDisplayFormatter = remember { DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES")) }
     val currencyFormat = remember {
         NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply { maximumFractionDigits = 0 }
@@ -61,7 +55,7 @@ fun ChartsScreen(
                     }
                 },
                 actions = {
-                    MonthNavigator_( // Reutilizamos el MonthNavigator
+                    MonthNavigator_(
                         currentYearMonth = currentYearMonth,
                         onPreviousMonth = { chartsViewModel.setCurrentMonthYear(currentYearMonth.minusMonths(1)) },
                         onNextMonth = { chartsViewModel.setCurrentMonthYear(currentYearMonth.plusMonths(1)) }
@@ -88,15 +82,13 @@ fun ChartsScreen(
                     Text("No hay datos de gastos para mostrar en este período.")
                 }
             } else {
-                // Contenedor para el gráfico de MPAndroidChart
                 Box(modifier = Modifier
                     .fillMaxWidth()
-                    .height(350.dp) // Ajusta la altura como necesites
+                    .height(350.dp)
                 ) {
                     MPAndroidPieChart(pieChartDataList = processedPieData)
                 }
 
-                // Leyenda manual (opcional, MPAndroidChart puede tener su propia leyenda)
                 Spacer(modifier = Modifier.height(16.dp))
                 processedPieData.forEach { data ->
                     Row(
@@ -106,7 +98,7 @@ fun ChartsScreen(
                         Box(
                             modifier = Modifier
                                 .size(12.dp)
-                                .aspectRatio(1f) // Asegura que sea un círculo si usas CircleShape
+                                .aspectRatio(1f)
                                 .background(data.color, shape = androidx.compose.foundation.shape.CircleShape)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -123,19 +115,16 @@ fun ChartsScreen(
 
 @Composable
 fun MPAndroidPieChart(pieChartDataList: List<PieChartData>) {
-    val context = LocalContext.current
-    val currentColorScheme = MaterialTheme.colorScheme
     val chartTextColor = if (isSystemInDarkTheme()) {
-        Color.White // Si el tema es oscuro, el texto es blanco
+        Color.White
     } else {
-        Color.Black // Si el tema es claro, el texto es negro
+        Color.Black
     }
     AndroidView(
         factory = { ctx ->
             PieChart(ctx).apply {
-                // Configuraciones iniciales del gráfico
                 this.description.isEnabled = false
-                this.isDrawHoleEnabled = true // Para hacerlo un Donut Chart
+                this.isDrawHoleEnabled = true
                 this.setHoleColor(AndroidColor.TRANSPARENT)
                 this.setTransparentCircleColor(AndroidColor.TRANSPARENT)
                 this.setTransparentCircleAlpha(0)
@@ -145,65 +134,40 @@ fun MPAndroidPieChart(pieChartDataList: List<PieChartData>) {
                 this.centerText = "Gastos"
                 this.setCenterTextSize(16f)
                 this.setCenterTextColor(chartTextColor.toArgb())
-
-
                 this.rotationAngle = 0f
                 this.isRotationEnabled = true
                 this.isHighlightPerTapEnabled = true
-
-                // Leyenda de MPAndroidChart (puedes configurarla o deshabilitarla si haces una manual en Compose)
-                this.legend.isEnabled = false // Deshabilitada para usar leyenda manual en Compose
-                // val l = this.legend
-                // l.verticalAlignment = Legend.LegendVerticalAlignment.TOP
-                // l.horizontalAlignment = Legend.LegendHorizontalAlignment.RIGHT
-                // l.orientation = Legend.LegendOrientation.VERTICAL
-                // l.setDrawInside(false)
-                // l.xEntrySpace = 7f
-                // l.yEntrySpace = 0f
-                // l.yOffset = 0f
-
-                // Formateador para los valores en el gráfico (porcentajes)
+                this.legend.isEnabled = false
                 this.setUsePercentValues(true)
                 this.setEntryLabelColor(chartTextColor.toArgb())
                 this.setEntryLabelTextSize(12f)
             }
         },
         update = { pieChart ->
-            // Actualizar los datos del gráfico
             val entries = ArrayList<PieEntry>()
             for (data in pieChartDataList) {
                 entries.add(PieEntry(data.value, data.label))
             }
-
-            val dataSet = PieDataSet(entries, "") // El segundo argumento es la etiqueta del dataset, no necesaria para pie
-            dataSet.sliceSpace = 2f // Espacio entre slices
+            val dataSet = PieDataSet(entries, "")
+            dataSet.sliceSpace = 2f
             dataSet.selectionShift = 5f
-
-            // Colores (usa los colores que ya tienes en PieChartData)
             val colors = ArrayList<Int>()
             for (data in pieChartDataList) {
-                colors.add(data.color.toArgb()) // Convertir Color de Compose a Int ARGB
+                colors.add(data.color.toArgb())
             }
-            // O usar plantillas de color de MPAndroidChart:
-            // colors.addAll(ColorTemplate.MATERIAL_COLORS.toList())
-            // colors.addAll(ColorTemplate.VORDIPLOM_COLORS.toList())
             dataSet.colors = colors
-
             val data = PieData(dataSet)
-            data.setValueFormatter(PercentFormatter(pieChart)) // Usar pieChart como contexto para el formateador
+            data.setValueFormatter(PercentFormatter(pieChart))
             data.setValueTextSize(11f)
             data.setValueTextColor(chartTextColor.toArgb())
-
-
             pieChart.data = data
-            pieChart.invalidate() // Redibujar el gráfico
-            pieChart.animateY(1000) // Animación
+            pieChart.invalidate()
+            pieChart.animateY(1000)
         },
         modifier = Modifier.fillMaxSize()
     )
 }
 
-// Reutilizar MonthNavigator_
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MonthNavigator_(

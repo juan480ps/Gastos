@@ -3,34 +3,25 @@ package com.uaa.gastos.ui.viewmodel
 import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.graphics.Color // Usamos el Color de Compose
-// No necesitamos toArgb aquí, se usará en el Composable
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-// Ya no necesitamos los imports de Vico para el pie chart aquí
-// import com.patrykandpatrick.vico.core.entry.ChartEntry
-// import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
-// import com.patrykandpatrick.vico.core.entry.FloatEntry
 import com.uaa.gastos.data.AppDatabase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch // launch sigue siendo útil para otras cosas si las hubiera
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-// kotlin.random.Random no se usa si los colores son predefinidos
 
-// Helper data class para datos del gráfico de pastel. Esta sigue siendo útil.
 data class PieChartData(
     val label: String,
     val value: Float,
-    val color: Color // androidx.compose.ui.graphics.Color
+    val color: Color
 )
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ChartsViewModel(application: Application) : AndroidViewModel(application) {
     private val transactionDao = AppDatabase.getInstance(application).transactionDao()
     private val categoryDao = AppDatabase.getInstance(application).categoryDao()
-
     private val _currentMonthYear = MutableStateFlow(YearMonth.now())
     val currentMonthYear: StateFlow<YearMonth> = _currentMonthYear.asStateFlow()
 
@@ -42,10 +33,6 @@ class ChartsViewModel(application: Application) : AndroidViewModel(application) 
         _currentMonthYear.value = yearMonth
     }
 
-    // Ya NO necesitamos el Vico ModelProducer para el gráfico de pastel
-    // val expensePieChartModelProducer = ChartEntryModelProducer()
-
-    // Datos procesados para el gráfico de pastel. Esto sigue siendo correcto y útil.
     @OptIn(ExperimentalCoroutinesApi::class)
     val processedExpensePieData: StateFlow<List<PieChartData>> = currentMonthYearString.flatMapLatest { monthStr ->
         combine(
@@ -61,11 +48,11 @@ class ChartsViewModel(application: Application) : AndroidViewModel(application) 
 
             val expensesByCategory = expensesInMonth
                 .groupBy { it.categoryId }
-                .mapValues { entry -> entry.value.sumOf { it.amount * -1 } } // Sumar como positivo
+                .mapValues { entry -> entry.value.sumOf { it.amount * -1 } }
 
             val chartDataList = mutableListOf<PieChartData>()
             var colorIndex = 0
-            // Estos colores son androidx.compose.ui.graphics.Color
+
             val predefinedColors = listOf(
                 Color(0xFFF44336), Color(0xFFE91E63), Color(0xFF9C27B0), Color(0xFF673AB7),
                 Color(0xFF3F51B5), Color(0xFF2196F3), Color(0xFF03A9F4), Color(0xFF00BCD4),
@@ -74,7 +61,7 @@ class ChartsViewModel(application: Application) : AndroidViewModel(application) 
             )
 
             expensesByCategory.entries
-                .sortedByDescending { it.value } // Opcional: ordenar por valor
+                .sortedByDescending { it.value }
                 .forEach { (categoryId, totalAmount) ->
                     val categoryName = categoryId?.let { id ->
                         categories.find { it.id == id }?.name
@@ -88,28 +75,7 @@ class ChartsViewModel(application: Application) : AndroidViewModel(application) 
                     )
                     colorIndex++
                 }
-            // La ordenación se puede hacer antes del forEach para asignar colores consistentemente si eso se desea.
-            // O dejarla como estaba: chartDataList.sortedByDescending { it.value } al final
-            chartDataList // Devuelve la lista ya construida
+            chartDataList
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
-
-
-    // El bloque init que actualizaba el Vico ModelProducer ya NO es necesario para el gráfico de pastel.
-    /*
-    init {
-        viewModelScope.launch {
-            processedExpensePieData.collect { pieDataList ->
-                if (pieDataList.isNotEmpty()) {
-                    val entries = pieDataList.mapIndexed { index, data ->
-                        FloatEntry(x = index.toFloat(), y = data.value)
-                    }
-                    expensePieChartModelProducer.setEntries(entries)
-                } else {
-                    expensePieChartModelProducer.setEntries(emptyList<ChartEntry>())
-                }
-            }
-        }
-    }
-    */
 }

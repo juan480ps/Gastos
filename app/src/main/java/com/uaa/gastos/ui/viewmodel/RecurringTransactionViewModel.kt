@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.time.temporal.TemporalAdjusters
 
 @RequiresApi(Build.VERSION_CODES.O)
 class RecurringTransactionViewModel(application: Application) : AndroidViewModel(application) {
@@ -53,7 +52,7 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
     }
 
     fun addOrUpdateRecurringTransaction(
-        id: Int? = null, // null para añadir, valor para editar
+        id: Int? = null,
         title: String,
         amount: Double,
         categoryId: Int?,
@@ -79,25 +78,21 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
                 return@launch
             }
 
-            val formatter = DateTimeFormatter.ISO_LOCAL_DATE // YYYY-MM-DD
-
-            // Calcular la primera 'nextDueDate'
+            val formatter = DateTimeFormatter.ISO_LOCAL_DATE
             var calculatedNextDueDate = calculateNextDueDate(startDate, dayOfMonth, recurrenceType)
             val today = LocalDate.now()
-            // Si la primera fecha de vencimiento calculada ya pasó Y es ANTES o IGUAL a la fecha de inicio,
-            // la avanzamos al siguiente periodo válido que sea igual o posterior a hoy.
+
             while (calculatedNextDueDate.isBefore(startDate) || calculatedNextDueDate.isBefore(today)) {
                 calculatedNextDueDate = when (recurrenceType) {
                     RecurrenceType.MONTHLY -> getNextMonthlyDueDate(calculatedNextDueDate, dayOfMonth)
-                    // Implementar otros tipos si es necesario
+
                 }
             }
-
 
             val entity = RecurringTransactionEntity(
                 id = id ?: 0,
                 title = title,
-                amount = amount, // Guardar como positivo, se convertirá a negativo al crear la transacción
+                amount = amount,
                 categoryId = categoryId,
                 recurrenceType = recurrenceType,
                 dayOfMonth = dayOfMonth,
@@ -119,7 +114,7 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
     fun deleteRecurringTransaction(recurringTransaction: RecurringTransaction) {
         viewModelScope.launch {
             recurringDao.delete(
-                RecurringTransactionEntity( // Reconstruir Entity para el DAO
+                RecurringTransactionEntity(
                     id = recurringTransaction.id,
                     title = recurringTransaction.title,
                     amount = recurringTransaction.amount,
@@ -147,28 +142,21 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
                 val nextDueDate = LocalDate.parse(item.nextDueDate, formatter)
                 val endDate = item.endDate?.let { LocalDate.parse(it, formatter) }
 
-                // No generar si la fecha de vencimiento es posterior a la fecha de finalización
                 if (endDate != null && nextDueDate.isAfter(endDate)) {
-                    // Opcionalmente, desactivar la recurrencia aquí
-                    // recurringDao.update(item.copy(isActive = false))
                     continue
                 }
 
-                // Generar la transacción
                 transactionDao.insert(
                     TransactionEntity(
                         title = item.title,
-                        amount = -item.amount, // Hacerlo negativo para que sea un gasto
+                        amount = -item.amount,
                         date = item.nextDueDate,
                         categoryId = item.categoryId
                     )
                 )
 
-                // Actualizar la 'nextDueDate' para la siguiente ocurrencia
                 val newNextDueDate = calculateNextDueDate(nextDueDate.plusDays(1), item.dayOfMonth, item.recurrenceType)
 
-                // Si la nueva fecha de vencimiento es después de la fecha de finalización,
-                // podríamos desactivar la recurrencia o simplemente dejar que la comprobación anterior lo maneje.
                 if (endDate != null && newNextDueDate.isAfter(endDate)) {
                     recurringDao.update(item.copy(isActive = false, nextDueDate = newNextDueDate.format(formatter)))
                 } else {
@@ -181,18 +169,15 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
     private fun calculateNextDueDate(fromDate: LocalDate, dayOfMonth: Int, type: RecurrenceType): LocalDate {
         return when (type) {
             RecurrenceType.MONTHLY -> getNextMonthlyDueDate(fromDate, dayOfMonth)
-            // Agrega otros tipos aquí
+
         }
     }
 
     private fun getNextMonthlyDueDate(currentDate: LocalDate, day: Int): LocalDate {
         var yearMonth = YearMonth.from(currentDate)
-        var targetDay = day.coerceAtMost(yearMonth.lengthOfMonth()) // Ajustar si el día es > días en mes
-
+        var targetDay = day.coerceAtMost(yearMonth.lengthOfMonth())
         var nextDate = yearMonth.atDay(targetDay)
 
-        // Si la fecha calculada para este mes ya pasó (o es hoy y 'currentDate' es de hoy para el siguiente), o es antes de 'currentDate'
-        // avanzamos al siguiente mes.
         if (nextDate.isBefore(currentDate) || nextDate.isEqual(currentDate) ) {
             yearMonth = yearMonth.plusMonths(1)
             targetDay = day.coerceAtMost(yearMonth.lengthOfMonth())

@@ -5,9 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
-import androidx.room.TypeConverters // Nuevo
+import androidx.room.TypeConverters
 
-// Nuevo TypeConverter
 class Converters {
     @TypeConverter
     fun fromRecurrenceType(value: RecurrenceType): String = value.name
@@ -16,22 +15,22 @@ class Converters {
     fun toRecurrenceType(value: String): RecurrenceType = RecurrenceType.valueOf(value)
 }
 
-
 @Database(
     entities = [
         TransactionEntity::class,
         CategoryEntity::class,
         BudgetEntity::class,
-        RecurringTransactionEntity::class // Nuevo
+        RecurringTransactionEntity::class
     ],
-    version = 4 // Incrementar versión
+    version = 4
 )
-@TypeConverters(Converters::class) // Nuevo
+
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun categoryDao(): CategoryDao
     abstract fun budgetDao(): BudgetDao
-    abstract fun recurringTransactionDao(): RecurringTransactionDao // Nuevo
+    abstract fun recurringTransactionDao(): RecurringTransactionDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

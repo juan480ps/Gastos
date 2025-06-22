@@ -1,26 +1,25 @@
 package com.uaa.gastos.ui
 
 import android.os.Build
-import android.widget.Toast // Asegúrate que esté
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext // Asegúrate que esté
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.uaa.gastos.Routes
 import com.uaa.gastos.model.Category
-import com.uaa.gastos.ui.viewmodel.BudgetViewModel // Nuevo
+import com.uaa.gastos.ui.viewmodel.BudgetViewModel
 import com.uaa.gastos.ui.viewmodel.CategoryViewModel
 import com.uaa.gastos.ui.viewmodel.TransactionViewModel
-import kotlinx.coroutines.flow.firstOrNull // Para obtener valor de Flow una vez
-import kotlinx.coroutines.launch // Para coroutines
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.YearMonth
@@ -34,25 +33,22 @@ fun AddTransactionScreen(
     navController: NavController,
     transactionViewModel: TransactionViewModel = viewModel(),
     categoryViewModel: CategoryViewModel = viewModel(),
-    budgetViewModel: BudgetViewModel = viewModel() // Nuevo
+    budgetViewModel: BudgetViewModel = viewModel()
 ) {
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    var rawAmount by remember { mutableStateOf("") } // Para el valor numérico sin formato
+    var rawAmount by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-
     val categories by categoryViewModel.categories.collectAsState()
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
-
-    val numberFormat = NumberFormat.getNumberInstance(Locale.US) // Para formateo de input
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply { maximumFractionDigits = 0 } // Para mensajes
+    val numberFormat = NumberFormat.getNumberInstance(Locale.US)
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply { maximumFractionDigits = 0 }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope() // Para lanzar coroutines
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
-        // ... (TopAppBar sin cambios)
         topBar = {
             TopAppBar(
                 title = { Text("Agregar Gasto") },
@@ -73,7 +69,6 @@ fun AddTransactionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ... (OutlinedTextField para title y amount sin cambios)
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -107,9 +102,7 @@ fun AddTransactionScreen(
                 singleLine = true
             )
 
-
             ExposedDropdownMenuBox(
-                // ... (Selector de categoría sin cambios)
                 expanded = categoryDropdownExpanded,
                 onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded },
                 modifier = Modifier.fillMaxWidth()
@@ -157,7 +150,6 @@ fun AddTransactionScreen(
                 }
             }
 
-
             if (showError) {
                 Text(
                     text = errorMessage,
@@ -170,14 +162,14 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     val parsedAmount = rawAmount.toDoubleOrNull() ?: 0.0
-                    val currentExpenseAmount = if (parsedAmount < 0) parsedAmount * -1 else parsedAmount // Considerar solo gastos
+                    val currentExpenseAmount = if (parsedAmount < 0) parsedAmount * -1 else parsedAmount
 
                     when {
                         title.isBlank() -> {
                             errorMessage = "La descripción no puede estar vacía."
                             showError = true
                         }
-                        parsedAmount == 0.0 -> { // Permitir montos positivos para ingresos
+                        parsedAmount == 0.0 -> {
                             errorMessage = "El monto no puede ser cero."
                             showError = true
                         }
@@ -185,27 +177,26 @@ fun AddTransactionScreen(
                             showError = false
                             transactionViewModel.addTransaction(
                                 title = title,
-                                amount = parsedAmount, // Guardar el monto como está (positivo o negativo)
+                                amount = parsedAmount,
                                 date = LocalDate.now().toString(),
                                 categoryId = selectedCategory?.id
                             )
 
-                            // Comprobar presupuesto si es un gasto y tiene categoría
                             if (parsedAmount < 0 && selectedCategory != null) {
                                 coroutineScope.launch {
                                     val monthYearStr = YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
                                     val budgetEntity = budgetViewModel.getBudgetForCategory(selectedCategory!!.id, monthYearStr).firstOrNull()
 
                                     if (budgetEntity != null && budgetEntity.amount > 0) {
-                                        // Calcular gastos totales ANTES de esta transacción para esta categoría y mes
+
                                         val previousTransactions = transactionViewModel.transactions.firstOrNull() ?: emptyList()
                                         val spentBeforeThisTransaction = previousTransactions
                                             .filter {
                                                 it.categoryId == selectedCategory!!.id &&
                                                         it.date.startsWith(monthYearStr) &&
-                                                        it.amount < 0 // Solo gastos
+                                                        it.amount < 0
                                             }
-                                            .sumOf { it.amount * -1 } // Sumar como positivo
+                                            .sumOf { it.amount * -1 }
 
                                         val totalSpentAfterThisTransaction = spentBeforeThisTransaction + currentExpenseAmount
 

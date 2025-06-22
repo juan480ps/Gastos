@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Assessment // Nuevo icono para presupuestos
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,18 +21,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.uaa.gastos.Routes
-import com.uaa.gastos.model.Budget // Necesario para BudgetListItem
-import com.uaa.gastos.ui.viewmodel.BudgetViewModel // Nuevo ViewModel
+import com.uaa.gastos.model.Budget
+import com.uaa.gastos.ui.viewmodel.BudgetViewModel
 import com.uaa.gastos.ui.viewmodel.TransactionViewModel
 import java.text.NumberFormat
-import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.*
-import androidx.compose.material.icons.filled.Autorenew // Nuevo icono para recurrentes
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.runtime.LaunchedEffect
 import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
-import androidx.compose.material.icons.filled.PieChart // Nuevo icono para gráficos
+import androidx.compose.material.icons.filled.PieChart
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,13 +44,11 @@ fun HomeScreen(
     val transactions by transactionViewModel.transactions.collectAsState()
     val budgetsWithSpending by budgetViewModel.budgetsWithSpendingForCurrentMonth.collectAsState(initial = emptyList())
     val currentYearMonth by budgetViewModel.currentMonthYear.collectAsState()
-
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply {
         maximumFractionDigits = 0
     }
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
 
-    // Procesar transacciones recurrentes al iniciar la pantalla (o en MainActivity)
     LaunchedEffect(Unit) {
         recurringTransactionViewModel.processDueRecurringTransactions()
     }
@@ -62,10 +58,10 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("Mis Gastos") },
                 actions = {
-                    IconButton(onClick = { navController.navigate(Routes.CHARTS_SCREEN) }) { // Nuevo
+                    IconButton(onClick = { navController.navigate(Routes.CHARTS_SCREEN) }) {
                         Icon(Icons.Filled.PieChart, contentDescription = "Ver Gráficos")
                     }
-                    IconButton(onClick = { navController.navigate(Routes.MANAGE_RECURRING_TRANSACTIONS) }) { // Nuevo
+                    IconButton(onClick = { navController.navigate(Routes.MANAGE_RECURRING_TRANSACTIONS) }) {
                         Icon(Icons.Filled.Autorenew, contentDescription = "Gestionar Recurrentes")
                     }
                     IconButton(onClick = { navController.navigate(Routes.MANAGE_BUDGETS) }) {
@@ -91,21 +87,18 @@ fun HomeScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             SummaryCard(balance = transactions.sumOf { it.amount })
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Sección de Resumen de Presupuestos
             Text(
                 "Resumen de Presupuestos (${currentYearMonth.format(monthDisplayFormatter).replaceFirstChar { it.uppercase() }})",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            if (budgetsWithSpending.any { it.amount > 0 }) { // Mostrar solo si hay algún presupuesto configurado
+            if (budgetsWithSpending.any { it.amount > 0 }) {
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = 240.dp), // Limitar altura para que no ocupe toda la pantalla
+                    modifier = Modifier.heightIn(max = 240.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(budgetsWithSpending.filter { it.amount > 0 }) { budgetItem -> // Solo los que tienen presupuesto
+                    items(budgetsWithSpending.filter { it.amount > 0 }) { budgetItem ->
                         BudgetStatusItem(budgetItem, currencyFormat)
                     }
                 }
@@ -116,12 +109,9 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.outline
                 )
             }
-
-
             Spacer(modifier = Modifier.height(24.dp))
             Text("Transacciones Recientes", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
-
             if (transactions.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
@@ -130,9 +120,8 @@ fun HomeScreen(
                     Text("No hay transacciones registradas.")
                 }
             } else {
-                // Limitar la altura de la lista de transacciones si la de presupuestos es larga
                 LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
-                    items(transactions.take(10)) { tx -> // Mostrar solo las últimas 10, por ejemplo
+                    items(transactions.take(10)) { tx ->
                         TransactionItem(
                             transaction = tx,
                             onDelete = { transactionViewModel.deleteTransaction(tx.id) }
@@ -148,10 +137,9 @@ fun HomeScreen(
 fun BudgetStatusItem(budget: Budget, currencyFormat: NumberFormat) {
     val progressColor = when {
         budget.progress > 1f -> MaterialTheme.colorScheme.error
-        budget.progress > 0.85f -> Color(0xFFFFA000) // Naranja
+        budget.progress > 0.85f -> Color(0xFFFFA000)
         else -> MaterialTheme.colorScheme.primary
     }
-
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),

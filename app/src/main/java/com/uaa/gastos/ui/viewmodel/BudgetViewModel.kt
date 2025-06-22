@@ -8,8 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.uaa.gastos.data.AppDatabase
 import com.uaa.gastos.data.BudgetEntity
 import com.uaa.gastos.model.Budget
-import com.uaa.gastos.model.Category
-import com.uaa.gastos.model.Transaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,7 +18,6 @@ import java.time.format.DateTimeFormatter
 class BudgetViewModel(application: Application) : AndroidViewModel(application) {
     private val budgetDao = AppDatabase.getInstance(application).budgetDao()
     private val categoryDao = AppDatabase.getInstance(application).categoryDao()
-
     private val _currentMonthYear = MutableStateFlow(YearMonth.now())
     val currentMonthYear: StateFlow<YearMonth> = _currentMonthYear.asStateFlow()
 
@@ -56,34 +53,32 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     @OptIn(ExperimentalCoroutinesApi::class)
     val budgetsWithSpendingForCurrentMonth: Flow<List<Budget>> = currentMonthYearString.flatMapLatest { monthStr ->
         combine(
-            categoryDao.getAll(), // Todas las categorías
-            budgetDao.getBudgetsForMonth(monthStr), // Presupuestos para el mes actual
-            getApplication<Application>().let { app -> // Necesitamos acceso a TransactionDao
-                AppDatabase.getInstance(app).transactionDao().getAll() // Todas las transacciones
+            categoryDao.getAll(),
+            budgetDao.getBudgetsForMonth(monthStr),
+            getApplication<Application>().let { app ->
+                AppDatabase.getInstance(app).transactionDao().getAll()
             }
         ) { categoriesEntities, budgetEntities, transactionEntities ->
             val transactionsForMonth = transactionEntities.filter {
-                it.date.startsWith(monthStr) && it.amount < 0 // Solo gastos y del mes actual
+                it.date.startsWith(monthStr) && it.amount < 0
             }
 
             categoriesEntities.map { categoryEntity ->
                 val budgetEntity = budgetEntities.find { it.categoryId == categoryEntity.id }
                 val spentAmount = transactionsForMonth
                     .filter { it.categoryId == categoryEntity.id }
-                    .sumOf { it.amount * -1 } // Sumar como positivo
-
+                    .sumOf { it.amount * -1 }
                 val budgetAmount = budgetEntity?.amount ?: 0.0
-
                 Budget(
-                    id = budgetEntity?.id ?: 0, // Podría no tener presupuesto aún
+                    id = budgetEntity?.id ?: 0,
                     categoryId = categoryEntity.id,
                     categoryName = categoryEntity.name,
                     monthYear = monthStr,
                     amount = budgetAmount,
                     spentAmount = spentAmount
-                    // remainingAmount y progress se calculan en el data class
+
                 )
-            }.sortedBy { it.categoryName } // Ordenar alfabéticamente por nombre de categoría
+            }.sortedBy { it.categoryName }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }
