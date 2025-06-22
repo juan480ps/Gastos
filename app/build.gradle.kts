@@ -73,4 +73,20 @@ dependencies {
 
     // iconos
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Vico Charts
+
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+
+    // DataStore Preferences
+    implementation ("androidx.datastore:datastore-preferences:1.0.0") // Verifica la última versión
+
+    // EncryptedSharedPreferences (para seguridad del token)
+    implementation ("androidx.security:security-crypto:1.1.0-alpha06")
 }

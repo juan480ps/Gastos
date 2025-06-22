@@ -20,6 +20,7 @@ object Routes {
     // Ruta para añadir/editar con argumento opcional
     const val ADD_EDIT_RECURRING_TRANSACTION = "add_edit_recurring_transaction" // Nuevo
     const val ARG_RECURRING_TRANSACTION_ID = "recurringTransactionId" // Nuevo
+    const val CHARTS_SCREEN = "charts_screen" // Nuevo
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -52,6 +53,9 @@ fun AppNavigation(navController: NavHostController) {
         // Ruta alternativa para añadir nuevo sin pasar ID explícitamente en la URL
         composable(Routes.ADD_EDIT_RECURRING_TRANSACTION) {
             AddEditRecurringTransactionScreen(navController = navController, recurringTransactionId = null)
+        }
+        composable(Routes.CHARTS_SCREEN) { // Nuevo
+            ChartsScreen(navController)
         }
     }
 }

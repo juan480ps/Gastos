@@ -32,6 +32,7 @@ import java.util.*
 import androidx.compose.material.icons.filled.Autorenew // Nuevo icono para recurrentes
 import androidx.compose.runtime.LaunchedEffect
 import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
+import androidx.compose.material.icons.filled.PieChart // Nuevo icono para gráficos
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,6 +62,9 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("Mis Gastos") },
                 actions = {
+                    IconButton(onClick = { navController.navigate(Routes.CHARTS_SCREEN) }) { // Nuevo
+                        Icon(Icons.Filled.PieChart, contentDescription = "Ver Gráficos")
+                    }
                     IconButton(onClick = { navController.navigate(Routes.MANAGE_RECURRING_TRANSACTIONS) }) { // Nuevo
                         Icon(Icons.Filled.Autorenew, contentDescription = "Gestionar Recurrentes")
                     }
