@@ -1,6 +1,6 @@
 // ChatsViewModel
 
-package com.uaa.gastos.ui.viewmodel
+package com.uaa.misgastosapp.ui.viewmodel
 
 import android.app.Application
 import android.os.Build
@@ -9,7 +9,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.uaa.gastos.data.AppDatabase
+import com.uaa.misgastosapp.data.AppDatabase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import java.time.YearMonth

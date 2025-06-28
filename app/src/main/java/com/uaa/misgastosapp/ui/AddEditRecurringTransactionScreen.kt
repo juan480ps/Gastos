@@ -1,6 +1,6 @@
 // AddEditRecurringTransactionScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import android.app.DatePickerDialog
 import android.os.Build
@@ -24,10 +24,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.uaa.gastos.data.RecurrenceType
-import com.uaa.gastos.model.Category
-import com.uaa.gastos.ui.viewmodel.CategoryViewModel
-import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
+import com.uaa.misgastosapp.data.RecurrenceType
+import com.uaa.misgastosapp.model.Category
+import com.uaa.misgastosapp.ui.viewmodel.CategoryViewModel
+import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle

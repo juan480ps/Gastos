@@ -1,4 +1,4 @@
-package com.uaa.gastos
+package com.uaa.misgastosapp
 
 import org.junit.Test
 

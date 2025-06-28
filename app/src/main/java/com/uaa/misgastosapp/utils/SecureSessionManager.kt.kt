@@ -1,6 +1,6 @@
 // SecureSessionManager
 
-package com.uaa.gastos.utils
+package com.uaa.misgastosapp.utils
 
 import android.content.Context
 import android.content.SharedPreferences

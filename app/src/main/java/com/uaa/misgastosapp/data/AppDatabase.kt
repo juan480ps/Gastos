@@ -1,6 +1,6 @@
 // AppDatabase
 
-package com.uaa.gastos.data
+package com.uaa.misgastosapp.data
 
 import android.content.Context
 import androidx.room.Database

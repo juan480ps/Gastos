@@ -1,6 +1,6 @@
 // AppNavigation
 
-package com.uaa.gastos
+package com.uaa.misgastosapp
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -14,8 +14,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.uaa.gastos.ui.*
-import com.uaa.gastos.ui.viewmodel.AuthViewModel
+import com.uaa.misgastosapp.ui.*
+import com.uaa.misgastosapp.ui.viewmodel.AuthViewModel
 
 object Routes {
     const val LOGIN = "login"

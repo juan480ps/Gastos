@@ -20,6 +20,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Gastos"
+rootProject.name = "Mis Gastos App"
 include(":app")
  

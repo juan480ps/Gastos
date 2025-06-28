@@ -1,23 +1,23 @@
 // TransactionViewModel
 
-package com.uaa.gastos.ui.viewmodel
+package com.uaa.misgastosapp.ui.viewmodel
 
 import android.app.Application
 import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.uaa.gastos.data.AppDatabase
-import com.uaa.gastos.data.TransactionEntity
+import com.uaa.misgastosapp.data.AppDatabase
+import com.uaa.misgastosapp.data.TransactionEntity
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.uaa.gastos.model.Transaction
+import com.uaa.misgastosapp.model.Transaction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.uaa.gastos.utils.Result
+import com.uaa.misgastosapp.utils.Result
 
 class TransactionViewModel(application: Application) : AndroidViewModel(application) {
     private val transactionDao = AppDatabase.getInstance(application).transactionDao()

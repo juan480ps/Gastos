@@ -1,6 +1,6 @@
 // SummaryScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*

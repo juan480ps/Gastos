@@ -1,6 +1,6 @@
 // RecurringTransactionViewModel
 
-package com.uaa.gastos.ui.viewmodel
+package com.uaa.misgastosapp.ui.viewmodel
 
 import android.app.Application
 import android.database.sqlite.SQLiteException
@@ -9,8 +9,8 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.uaa.gastos.data.*
-import com.uaa.gastos.model.RecurringTransaction
+import com.uaa.misgastosapp.data.*
+import com.uaa.misgastosapp.model.RecurringTransaction
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

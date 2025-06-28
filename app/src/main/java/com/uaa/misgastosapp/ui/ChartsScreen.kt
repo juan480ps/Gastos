@@ -1,6 +1,6 @@
 // ChartsScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import android.graphics.Color as AndroidColor
 import android.os.Build
@@ -24,8 +24,8 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
-import com.uaa.gastos.ui.viewmodel.ChartsViewModel
-import com.uaa.gastos.ui.viewmodel.PieChartData
+import com.uaa.misgastosapp.ui.viewmodel.ChartsViewModel
+import com.uaa.misgastosapp.ui.viewmodel.PieChartData
 import java.text.NumberFormat
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter

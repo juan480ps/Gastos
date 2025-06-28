@@ -1,6 +1,6 @@
 // TransactionItem
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,7 +17,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.uaa.gastos.model.Transaction
+import com.uaa.misgastosapp.model.Transaction
 import java.text.NumberFormat
 import java.util.*
 

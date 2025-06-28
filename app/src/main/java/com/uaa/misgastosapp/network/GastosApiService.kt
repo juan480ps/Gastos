@@ -1,8 +1,8 @@
 // GastosApiService
 
-package com.uaa.gastos.network
+package com.uaa.misgastosapp.network
 
-import com.uaa.gastos.network.model.*
+import com.uaa.misgastosapp.network.model.*
 import retrofit2.Response
 import retrofit2.http.*
 

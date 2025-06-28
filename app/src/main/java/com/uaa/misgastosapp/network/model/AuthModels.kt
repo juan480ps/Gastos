@@ -1,6 +1,6 @@
 // AuthModels
 
-package com.uaa.gastos.network.model
+package com.uaa.misgastosapp.network.model
 
 import com.google.gson.annotations.SerializedName
 

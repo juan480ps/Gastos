@@ -1,6 +1,6 @@
 // AddTRansactionScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import android.os.Build
 import android.widget.Toast
@@ -15,11 +15,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.uaa.gastos.Routes
-import com.uaa.gastos.model.Category
-import com.uaa.gastos.ui.viewmodel.BudgetViewModel
-import com.uaa.gastos.ui.viewmodel.CategoryViewModel
-import com.uaa.gastos.ui.viewmodel.TransactionViewModel
+import com.uaa.misgastosapp.Routes
+import com.uaa.misgastosapp.model.Category
+import com.uaa.misgastosapp.ui.viewmodel.BudgetViewModel
+import com.uaa.misgastosapp.ui.viewmodel.CategoryViewModel
+import com.uaa.misgastosapp.ui.viewmodel.TransactionViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.text.NumberFormat

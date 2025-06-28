@@ -1,8 +1,8 @@
 // RecurringTransaction
 
-package com.uaa.gastos.model
+package com.uaa.misgastosapp.model
 
-import com.uaa.gastos.data.RecurrenceType
+import com.uaa.misgastosapp.data.RecurrenceType
 
 data class RecurringTransaction(
     val id: Int,

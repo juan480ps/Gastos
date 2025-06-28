@@ -1,6 +1,6 @@
 // TransactionEntity
 
-package com.uaa.gastos.data
+package com.uaa.misgastosapp.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

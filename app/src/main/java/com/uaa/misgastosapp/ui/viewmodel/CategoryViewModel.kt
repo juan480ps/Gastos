@@ -1,6 +1,6 @@
 // CategoryViewModel
 
-package com.uaa.gastos.ui.viewmodel
+package com.uaa.misgastosapp.ui.viewmodel
 
 import android.app.Application
 import android.database.sqlite.SQLiteConstraintException
@@ -8,9 +8,9 @@ import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.uaa.gastos.data.AppDatabase
-import com.uaa.gastos.data.CategoryEntity
-import com.uaa.gastos.model.Category
+import com.uaa.misgastosapp.data.AppDatabase
+import com.uaa.misgastosapp.data.CategoryEntity
+import com.uaa.misgastosapp.model.Category
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

@@ -1,6 +1,6 @@
 // ManageBudgetsScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import android.os.Build
 import android.widget.Toast
@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.uaa.gastos.model.Budget
-import com.uaa.gastos.ui.viewmodel.BudgetViewModel
+import com.uaa.misgastosapp.model.Budget
+import com.uaa.misgastosapp.ui.viewmodel.BudgetViewModel
 import java.text.NumberFormat
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter

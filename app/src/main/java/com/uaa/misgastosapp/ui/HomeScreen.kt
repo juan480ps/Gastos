@@ -1,6 +1,6 @@
 // HomeScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -26,17 +26,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.uaa.gastos.Routes
-import com.uaa.gastos.model.Budget
-import com.uaa.gastos.ui.viewmodel.AuthViewModel
-import com.uaa.gastos.ui.viewmodel.BudgetViewModel
-import com.uaa.gastos.ui.viewmodel.TransactionViewModel
+import com.uaa.misgastosapp.Routes
+import com.uaa.misgastosapp.model.Budget
+import com.uaa.misgastosapp.ui.viewmodel.AuthViewModel
+import com.uaa.misgastosapp.ui.viewmodel.BudgetViewModel
+import com.uaa.misgastosapp.ui.viewmodel.TransactionViewModel
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.util.*
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.runtime.LaunchedEffect
-import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
+import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
 import androidx.compose.material.icons.filled.PieChart
 
 @RequiresApi(Build.VERSION_CODES.O)

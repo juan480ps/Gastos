@@ -1,6 +1,5 @@
-package com.uaa.gastos.ui.theme
+package com.uaa.misgastosapp.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

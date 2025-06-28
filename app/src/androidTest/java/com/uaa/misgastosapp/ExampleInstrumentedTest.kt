@@ -1,4 +1,4 @@
-package com.uaa.gastos
+package com.uaa.misgastosapp
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

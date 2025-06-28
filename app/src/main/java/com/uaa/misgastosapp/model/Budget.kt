@@ -1,6 +1,6 @@
 // Budget
 
-package com.uaa.gastos.model
+package com.uaa.misgastosapp.model
 
 data class Budget(
     val id: Int,

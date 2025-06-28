@@ -1,9 +1,9 @@
 // Network Module
 
-package com.uaa.gastos.network
+package com.uaa.misgastosapp.network
 
 import android.util.Log
-import com.uaa.gastos.utils.SecureSessionManager
+import com.uaa.misgastosapp.utils.SecureSessionManager
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

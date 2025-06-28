@@ -1,4 +1,4 @@
-package com.uaa.gastos.ui.theme
+package com.uaa.misgastosapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,6 +1,6 @@
 // Transaction
 
-package com.uaa.gastos.model
+package com.uaa.misgastosapp.model
 
 data class Transaction(
     val id: Int,

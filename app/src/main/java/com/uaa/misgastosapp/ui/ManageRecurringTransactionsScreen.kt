@@ -1,6 +1,6 @@
 // ManageRecurringTransactionScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.uaa.gastos.Routes
-import com.uaa.gastos.model.RecurringTransaction
-import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
+import com.uaa.misgastosapp.Routes
+import com.uaa.misgastosapp.model.RecurringTransaction
+import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

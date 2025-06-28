@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.uaa.gastos"
+    namespace = "com.uaa.misgastosapp"
     compileSdk = 35
 
     defaultConfig {

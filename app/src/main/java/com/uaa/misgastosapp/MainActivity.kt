@@ -1,6 +1,6 @@
 // MainActivity
 
-package com.uaa.gastos
+package com.uaa.misgastosapp
 
 import android.os.Build
 import android.os.Bundle
@@ -11,10 +11,10 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
-import com.uaa.gastos.network.NetworkModule
-import com.uaa.gastos.utils.SecureSessionManager
-import com.uaa.gastos.ui.theme.GastosTheme
-import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
+import com.uaa.misgastosapp.network.NetworkModule
+import com.uaa.misgastosapp.utils.SecureSessionManager
+import com.uaa.misgastosapp.ui.theme.GastosTheme
+import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {

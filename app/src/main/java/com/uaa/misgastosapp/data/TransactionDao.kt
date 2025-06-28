@@ -1,6 +1,6 @@
 // TransactionDao
 
-package com.uaa.gastos.data
+package com.uaa.misgastosapp.data
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

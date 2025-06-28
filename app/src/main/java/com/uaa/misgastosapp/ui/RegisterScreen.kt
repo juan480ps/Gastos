@@ -1,6 +1,6 @@
 // RegisterScreen
 
-package com.uaa.gastos.ui
+package com.uaa.misgastosapp.ui
 
 import android.os.Build
 import androidx.compose.foundation.layout.*
@@ -23,8 +23,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.uaa.gastos.Routes
-import com.uaa.gastos.ui.viewmodel.AuthViewModel
+import com.uaa.misgastosapp.Routes
+import com.uaa.misgastosapp.ui.viewmodel.AuthViewModel
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 

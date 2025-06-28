@@ -1,6 +1,6 @@
 // AuthViewModel
 
-package com.uaa.gastos.ui.viewmodel
+package com.uaa.misgastosapp.ui.viewmodel
 
 import android.app.Application
 import android.os.Build
@@ -9,11 +9,11 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.uaa.gastos.data.AppDatabase
-import com.uaa.gastos.data.UserEntity
-import com.uaa.gastos.network.NetworkModule
-import com.uaa.gastos.network.model.*
-import com.uaa.gastos.utils.SecureSessionManager
+import com.uaa.misgastosapp.data.AppDatabase
+import com.uaa.misgastosapp.data.UserEntity
+import com.uaa.misgastosapp.network.NetworkModule
+import com.uaa.misgastosapp.network.model.*
+import com.uaa.misgastosapp.utils.SecureSessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
