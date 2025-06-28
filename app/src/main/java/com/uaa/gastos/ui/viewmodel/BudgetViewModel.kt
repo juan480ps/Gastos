@@ -3,7 +3,9 @@
 package com.uaa.gastos.ui.viewmodel
 
 import android.app.Application
+import android.database.sqlite.SQLiteException
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,27 +30,44 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setCurrentMonthYear(yearMonth: YearMonth) {
-        _currentMonthYear.value = yearMonth
+        try {
+            _currentMonthYear.value = yearMonth
+        } catch (e: Exception) {
+            Log.e("BudgetVM", "Error setting month year: ${e.message}")
+        }
     }
 
     fun getBudgetForCategory(categoryId: Int, monthYear: String): Flow<BudgetEntity?> {
         return budgetDao.getBudgetForCategoryAndMonth(categoryId, monthYear)
+            .catch { e ->
+                Log.e("BudgetVM", "Error getting budget: ${e.message}")
+                emit(null)
+            }
     }
 
     fun setBudget(categoryId: Int, amount: Double, monthYear: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            if (amount < 0) {
-                onError("El presupuesto no puede ser negativo.")
-                return@launch
-            }
-            budgetDao.insertOrUpdate(
-                BudgetEntity(
-                    categoryId = categoryId,
-                    monthYear = monthYear,
-                    amount = amount
+            try {
+                if (amount < 0) {
+                    onError("El presupuesto no puede ser negativo.")
+                    return@launch
+                }
+
+                budgetDao.insertOrUpdate(
+                    BudgetEntity(
+                        categoryId = categoryId,
+                        monthYear = monthYear,
+                        amount = amount
+                    )
                 )
-            )
-            onSuccess()
+                onSuccess()
+            } catch (e: SQLiteException) {
+                Log.e("BudgetVM", "Database error: ${e.message}")
+                onError("Error al guardar el presupuesto en la base de datos.")
+            } catch (e: Exception) {
+                Log.e("BudgetVM", "Unexpected error: ${e.message}")
+                onError("Error inesperado al guardar el presupuesto.")
+            }
         }
     }
 
@@ -61,26 +80,33 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 AppDatabase.getInstance(app).transactionDao().getAll()
             }
         ) { categoriesEntities, budgetEntities, transactionEntities ->
-            val transactionsForMonth = transactionEntities.filter {
-                it.date.startsWith(monthStr) && it.amount < 0
+            try {
+                val transactionsForMonth = transactionEntities.filter {
+                    it.date.startsWith(monthStr) && it.amount < 0
+                }
+
+                categoriesEntities.map { categoryEntity ->
+                    val budgetEntity = budgetEntities.find { it.categoryId == categoryEntity.id }
+                    val spentAmount = transactionsForMonth
+                        .filter { it.categoryId == categoryEntity.id }
+                        .sumOf { it.amount * -1 }
+                    val budgetAmount = budgetEntity?.amount ?: 0.0
+                    Budget(
+                        id = budgetEntity?.id ?: 0,
+                        categoryId = categoryEntity.id,
+                        categoryName = categoryEntity.name,
+                        monthYear = monthStr,
+                        amount = budgetAmount,
+                        spentAmount = spentAmount
+                    )
+                }.sortedBy { it.categoryName }
+            } catch (e: Exception) {
+                Log.e("BudgetVM", "Error calculating budgets: ${e.message}")
+                emptyList()
             }
-
-            categoriesEntities.map { categoryEntity ->
-                val budgetEntity = budgetEntities.find { it.categoryId == categoryEntity.id }
-                val spentAmount = transactionsForMonth
-                    .filter { it.categoryId == categoryEntity.id }
-                    .sumOf { it.amount * -1 }
-                val budgetAmount = budgetEntity?.amount ?: 0.0
-                Budget(
-                    id = budgetEntity?.id ?: 0,
-                    categoryId = categoryEntity.id,
-                    categoryName = categoryEntity.name,
-                    monthYear = monthStr,
-                    amount = budgetAmount,
-                    spentAmount = spentAmount
-
-                )
-            }.sortedBy { it.categoryName }
+        }.catch { e ->
+            Log.e("BudgetVM", "Flow error: ${e.message}")
+            emit(emptyList())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }
