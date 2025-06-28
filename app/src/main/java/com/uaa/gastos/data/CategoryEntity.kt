@@ -1,3 +1,5 @@
+// CategoryEntity
+
 package com.uaa.gastos.data
 
 import androidx.room.Entity

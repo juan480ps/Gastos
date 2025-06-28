@@ -1,3 +1,5 @@
+// AppDatabase
+
 package com.uaa.gastos.data
 
 import android.content.Context

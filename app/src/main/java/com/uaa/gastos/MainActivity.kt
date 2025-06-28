@@ -1,3 +1,5 @@
+// MainActivity
+
 package com.uaa.gastos
 
 import android.os.Build

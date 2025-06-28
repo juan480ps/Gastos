@@ -1,3 +1,5 @@
+// AddCategoryScreen
+
 package com.uaa.gastos.ui
 
 import android.widget.Toast

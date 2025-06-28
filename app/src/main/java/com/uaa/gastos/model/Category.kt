@@ -1,3 +1,5 @@
+// Category
+
 package com.uaa.gastos.model
 
 data class Category(

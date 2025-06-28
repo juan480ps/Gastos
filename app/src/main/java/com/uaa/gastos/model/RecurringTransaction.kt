@@ -1,3 +1,5 @@
+// RecurringTransaction
+
 package com.uaa.gastos.model
 
 import com.uaa.gastos.data.RecurrenceType

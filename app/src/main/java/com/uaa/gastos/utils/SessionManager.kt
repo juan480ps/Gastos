@@ -1,3 +1,5 @@
+// SessionManager
+
 package com.uaa.gastos.utils
 
 import android.content.Context

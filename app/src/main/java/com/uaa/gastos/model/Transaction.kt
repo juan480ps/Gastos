@@ -1,3 +1,5 @@
+// Transaction
+
 package com.uaa.gastos.model
 
 data class Transaction(
