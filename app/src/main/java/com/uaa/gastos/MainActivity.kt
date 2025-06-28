@@ -4,12 +4,15 @@ package com.uaa.gastos
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.uaa.gastos.network.NetworkModule
+import com.uaa.gastos.utils.SecureSessionManager
 import com.uaa.gastos.ui.theme.GastosTheme
 import com.uaa.gastos.ui.viewmodel.RecurringTransactionViewModel
 import kotlinx.coroutines.launch
@@ -21,8 +24,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val sessionManager = SecureSessionManager(this)
+        NetworkModule.initialize(sessionManager)
+
         lifecycleScope.launch {
-            recurringTransactionViewModel.processDueRecurringTransactions()
+            try {
+                recurringTransactionViewModel.processDueRecurringTransactions()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error processing recurring transactions: ${e.message}")
+            }
         }
 
         setContent {

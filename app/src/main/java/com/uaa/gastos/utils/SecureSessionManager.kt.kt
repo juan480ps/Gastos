@@ -1,16 +1,28 @@
-// SessionManager
+// SecureSessionManager
 
 package com.uaa.gastos.utils
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.core.content.edit
+import android.util.Log
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class SessionManager(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
+class SecureSessionManager(context: Context) {
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
+
+    private val prefs: SharedPreferences = EncryptedSharedPreferences.create(
+        context,
+        "secure_user_session",
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
 
     private val _userIdFlow = MutableStateFlow(getUserId())
     val userIdFlow: StateFlow<Int> = _userIdFlow.asStateFlow()
@@ -19,29 +31,38 @@ class SessionManager(context: Context) {
         const val USER_ID = "user_id"
         const val USER_EMAIL = "user_email"
         const val USER_NAME = "user_name"
+        const val USER_USERNAME = "user_username"
+        const val ACCESS_TOKEN = "access_token"
         const val IS_LOGGED_IN = "is_logged_in"
     }
 
-    init {
-        prefs.registerOnSharedPreferenceChangeListener { _, key ->
-            if (key == USER_ID) {
-                _userIdFlow.value = getUserId()
-            }
-        }
-    }
-
-    fun saveUserSession(userId: Int, email: String, name: String) {
-        prefs.edit {
+    fun saveUserSession(userId: Int, email: String, name: String, username: String, accessToken: String) {
+        Log.d("SessionManager", "Saving session - userId: $userId, token: ${accessToken.take(20)}...")
+        prefs.edit().apply {
             putInt(USER_ID, userId)
             putString(USER_EMAIL, email)
             putString(USER_NAME, name)
+            putString(USER_USERNAME, username)
+            putString(ACCESS_TOKEN, accessToken)
             putBoolean(IS_LOGGED_IN, true)
+            apply()
         }
         _userIdFlow.value = userId
     }
 
+    fun saveToken(token: String) {
+        Log.d("SessionManager", "Saving token: ${token.take(20)}...")
+        prefs.edit().putString(ACCESS_TOKEN, token).apply()
+    }
+
+    fun getAccessToken(): String? {
+        val token = prefs.getString(ACCESS_TOKEN, null)
+        Log.d("SessionManager", "Getting token: ${token?.take(20) ?: "null"}")
+        return token
+    }
+
     fun isLoggedIn(): Boolean {
-        return prefs.getBoolean(IS_LOGGED_IN, false)
+        return prefs.getBoolean(IS_LOGGED_IN, false) && getAccessToken() != null
     }
 
     fun getUserId(): Int {
@@ -56,10 +77,13 @@ class SessionManager(context: Context) {
         return prefs.getString(USER_NAME, null)
     }
 
+    fun getUserUsername(): String? {
+        return prefs.getString(USER_USERNAME, null)
+    }
+
     fun logout() {
-        prefs.edit {
-            clear()
-        }
+        Log.d("SessionManager", "Clearing session")
+        prefs.edit().clear().apply()
         _userIdFlow.value = 0
     }
 }

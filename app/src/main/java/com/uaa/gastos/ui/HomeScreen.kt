@@ -59,6 +59,8 @@ fun HomeScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     val userName = authViewModel.getCurrentUserName() ?: "Usuario"
 
+    val isOnline by authViewModel.isOnlineMode.collectAsState()
+
     LaunchedEffect(Unit) {
         recurringTransactionViewModel.processDueRecurringTransactions()
     }
@@ -67,7 +69,18 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Hola, $userName") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (isOnline) MaterialTheme.colorScheme.primary else Color.Gray
+                ),
                 actions = {
+                    if (!isOnline) {
+                        Text(
+                            "Modo Offline",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
                     IconButton(onClick = { navController.navigate(Routes.CHARTS_SCREEN) }) {
                         Icon(Icons.Filled.PieChart, contentDescription = "Ver Gráficos")
                     }

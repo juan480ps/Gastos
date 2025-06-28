@@ -37,7 +37,6 @@ fun AppNavigation(navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
-
     val startDestination = if (isLoggedIn) Routes.HOME else Routes.LOGIN
 
     LaunchedEffect(isLoggedIn) {
@@ -49,14 +48,9 @@ fun AppNavigation(navController: NavHostController) {
         }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
-
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.LOGIN) { LoginScreen(navController) }
         composable(Routes.REGISTER) { RegisterScreen(navController) }
-
 
         composable(Routes.HOME) { HomeScreen(navController) }
         composable(Routes.ADD_TRANSACTION) { AddTransactionScreen(navController) }
