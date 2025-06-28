@@ -3,14 +3,21 @@ package com.uaa.gastos
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.uaa.gastos.ui.*
+import com.uaa.gastos.ui.viewmodel.AuthViewModel
 
 object Routes {
+    const val LOGIN = "login"
+    const val REGISTER = "register"
     const val HOME = "home"
     const val ADD_TRANSACTION = "add_transaction"
     const val ADD_CATEGORY = "add_category"
@@ -25,7 +32,30 @@ object Routes {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    val authViewModel: AuthViewModel = viewModel()
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+
+
+    val startDestination = if (isLoggedIn) Routes.HOME else Routes.LOGIN
+
+    LaunchedEffect(isLoggedIn) {
+        if (!isLoggedIn && navController.currentDestination?.route != Routes.LOGIN &&
+            navController.currentDestination?.route != Routes.REGISTER) {
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+
+        composable(Routes.LOGIN) { LoginScreen(navController) }
+        composable(Routes.REGISTER) { RegisterScreen(navController) }
+
+
         composable(Routes.HOME) { HomeScreen(navController) }
         composable(Routes.ADD_TRANSACTION) { AddTransactionScreen(navController) }
         composable(Routes.ADD_CATEGORY) { AddCategoryScreen(navController) }
@@ -45,7 +75,6 @@ fun AppNavigation(navController: NavHostController) {
             val transactionId = backStackEntry.arguments?.getInt(Routes.ARG_RECURRING_TRANSACTION_ID)
             AddEditRecurringTransactionScreen(
                 navController = navController,
-
                 recurringTransactionId = if (transactionId == -1) null else transactionId
             )
         }

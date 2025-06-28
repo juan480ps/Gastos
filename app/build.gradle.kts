@@ -89,4 +89,10 @@ dependencies {
 
     // EncryptedSharedPreferences (para seguridad del token)
     implementation ("androidx.security:security-crypto:1.1.0-alpha06")
+
+
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+
+    implementation ("androidx.core:core-ktx:1.12.0' ")
 }

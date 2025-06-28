@@ -9,10 +9,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.uaa.gastos.Routes
 import com.uaa.gastos.model.Budget
+import com.uaa.gastos.ui.viewmodel.AuthViewModel
 import com.uaa.gastos.ui.viewmodel.BudgetViewModel
 import com.uaa.gastos.ui.viewmodel.TransactionViewModel
 import java.text.NumberFormat
@@ -39,7 +44,8 @@ fun HomeScreen(
     navController: NavController,
     transactionViewModel: TransactionViewModel = viewModel(),
     budgetViewModel: BudgetViewModel = viewModel(),
-            recurringTransactionViewModel: RecurringTransactionViewModel = viewModel()
+    recurringTransactionViewModel: RecurringTransactionViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val transactions by transactionViewModel.transactions.collectAsState()
     val budgetsWithSpending by budgetViewModel.budgetsWithSpendingForCurrentMonth.collectAsState(initial = emptyList())
@@ -48,6 +54,8 @@ fun HomeScreen(
         maximumFractionDigits = 0
     }
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    val userName = authViewModel.getCurrentUserName() ?: "Usuario"
 
     LaunchedEffect(Unit) {
         recurringTransactionViewModel.processDueRecurringTransactions()
@@ -56,7 +64,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Gastos") },
+                title = { Text("Hola, $userName") },
                 actions = {
                     IconButton(onClick = { navController.navigate(Routes.CHARTS_SCREEN) }) {
                         Icon(Icons.Filled.PieChart, contentDescription = "Ver Gráficos")
@@ -69,6 +77,9 @@ fun HomeScreen(
                     }
                     IconButton(onClick = { navController.navigate(Routes.CATEGORIES_LIST) }) {
                         Icon(Icons.Filled.Category, contentDescription = "Gestionar Categorías")
+                    }
+                    IconButton(onClick = { showLogoutDialog = true }) {
+                        Icon(Icons.Filled.ExitToApp, contentDescription = "Cerrar Sesión")
                     }
                 }
             )
@@ -130,6 +141,31 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Cerrar Sesión") },
+            text = { Text("¿Estás seguro de que deseas cerrar sesión?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        authViewModel.logout()
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                ) {
+                    Text("Sí")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 

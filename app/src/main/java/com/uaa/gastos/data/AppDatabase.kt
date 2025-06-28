@@ -20,17 +20,18 @@ class Converters {
         TransactionEntity::class,
         CategoryEntity::class,
         BudgetEntity::class,
-        RecurringTransactionEntity::class
+        RecurringTransactionEntity::class,
+        UserEntity::class
     ],
     version = 4
 )
-
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun categoryDao(): CategoryDao
     abstract fun budgetDao(): BudgetDao
     abstract fun recurringTransactionDao(): RecurringTransactionDao
+    abstract fun userDao(): UserDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
