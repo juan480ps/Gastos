@@ -171,7 +171,7 @@ fun LoginScreen(
                         Button(
                             onClick = {
                                 authViewModel.login(
-                                    email = email,
+                                    email = email.trim(),
                                     password = password,
                                     onSuccess = {
 
