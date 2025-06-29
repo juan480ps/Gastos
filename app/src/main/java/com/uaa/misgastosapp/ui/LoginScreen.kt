@@ -2,6 +2,7 @@
 
 package com.uaa.misgastosapp.ui
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,9 +39,24 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(false) }
     val isLoading by authViewModel.isLoading.collectAsState()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+
+    val sharedPreferences = remember {
+        context.getSharedPreferences("login_prefs", Context.MODE_PRIVATE)
+    }
+
+    LaunchedEffect(Unit) {
+        val savedEmail = sharedPreferences.getString("email", null)
+        val savedPassword = sharedPreferences.getString("password", null)
+        if (savedEmail != null && savedPassword != null) {
+            email = savedEmail
+            password = savedPassword
+            rememberMe = true
+        }
+    }
 
     Scaffold { paddingValues ->
         Box(
@@ -131,7 +147,25 @@ fun LoginScreen(
                             enabled = !isLoading
                         )
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = rememberMe,
+                                onCheckedChange = { rememberMe = it },
+                                enabled = !isLoading
+                            )
+                            Text(
+                                text = "Recordar credenciales",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Button(
                             onClick = {
@@ -139,6 +173,18 @@ fun LoginScreen(
                                     email = email,
                                     password = password,
                                     onSuccess = {
+
+                                        with(sharedPreferences.edit()) {
+                                            if (rememberMe) {
+                                                putString("email", email)
+                                                putString("password", password)
+                                            } else {
+                                                remove("email")
+                                                remove("password")
+                                            }
+                                            apply()
+                                        }
+
                                         navController.navigate(Routes.HOME) {
                                             popUpTo(Routes.LOGIN) { inclusive = true }
                                         }
@@ -151,7 +197,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
-                            enabled = !isLoading
+                            enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
                         ) {
                             if (isLoading) {
                                 CircularProgressIndicator(
