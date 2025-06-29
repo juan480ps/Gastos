@@ -8,20 +8,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,15 +24,14 @@ import com.uaa.misgastosapp.model.Budget
 import com.uaa.misgastosapp.ui.viewmodel.AuthViewModel
 import com.uaa.misgastosapp.ui.viewmodel.BudgetViewModel
 import com.uaa.misgastosapp.ui.viewmodel.TransactionViewModel
+import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
+import com.uaa.misgastosapp.utils.Result
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.util.*
-import androidx.compose.material.icons.filled.Autorenew
-import androidx.compose.runtime.LaunchedEffect
-import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
-import androidx.compose.material.icons.filled.PieChart
+import android.widget.Toast
 import androidx.compose.foundation.shape.CircleShape
-
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,16 +44,32 @@ fun HomeScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     val transactions by transactionViewModel.transactions.collectAsState()
+    val operationStatus by transactionViewModel.operationStatus.collectAsState()
     val budgetsWithSpending by budgetViewModel.budgetsWithSpendingForCurrentMonth.collectAsState(initial = emptyList())
     val currentYearMonth by budgetViewModel.currentMonthYear.collectAsState()
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply {
         maximumFractionDigits = 0
     }
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
-    var showLogoutDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
     val userName = authViewModel.getCurrentUserName() ?: "Usuario"
-
     val isOnline by authViewModel.isOnlineMode.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(operationStatus) {
+        val status = operationStatus
+        when (status) {
+            is Result.Success -> {
+                Toast.makeText(context, status.data, Toast.LENGTH_SHORT).show()
+                transactionViewModel.clearOperationStatus()
+            }
+            is Result.Error -> {
+                Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
+                transactionViewModel.clearOperationStatus()
+            }
+            else -> {}
+        }
+    }
 
     LaunchedEffect(Unit) {
         recurringTransactionViewModel.processDueRecurringTransactions()
@@ -114,52 +122,68 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            SummaryCard(balance = transactions.sumOf { it.amount })
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                "Resumen de Presupuestos (${currentYearMonth.format(monthDisplayFormatter).replaceFirstChar { it.uppercase() }})",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            if (budgetsWithSpending.any { it.amount > 0 }) {
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 240.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(budgetsWithSpending.filter { it.amount > 0 }) { budgetItem ->
-                        BudgetStatusItem(budgetItem, currencyFormat)
-                    }
-                }
-            } else {
+            item {
+                SummaryCard(balance = transactions.sumOf { it.amount })
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "No hay presupuestos configurados para este mes. Ve a 'Gestionar Presupuestos'.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline
+                    "Resumen de Presupuestos (${currentYearMonth.format(monthDisplayFormatter).replaceFirstChar { it.uppercase() }})",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("Transacciones Recientes", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            if (transactions.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No hay transacciones registradas.")
+
+            if (budgetsWithSpending.any { it.amount > 0 }) {
+                items(budgetsWithSpending.filter { it.amount > 0 }) { budgetItem ->
+                    BudgetStatusItem(budgetItem, currencyFormat)
                 }
             } else {
-                LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
-                    items(transactions.take(10)) { tx ->
-                        TransactionItem(
-                            transaction = tx,
-                            onDelete = { transactionViewModel.deleteTransaction(tx.id) }
-                        )
+                item {
+                    Text(
+                        "No hay presupuestos configurados para este mes. Ve a 'Gestionar Presupuestos'.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Transacciones Recientes", style = MaterialTheme.typography.titleMedium)
+            }
+
+            if (operationStatus is Result.Loading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
+                }
+            }
+
+            if (transactions.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No hay transacciones registradas.")
+                    }
+                }
+            } else {
+                items(transactions.take(10)) { tx ->
+                    TransactionItem(
+                        transaction = tx,
+                        onDelete = { transactionViewModel.deleteTransaction(tx.id) }
+                    )
                 }
             }
         }

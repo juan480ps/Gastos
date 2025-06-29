@@ -1,4 +1,4 @@
-// AddTRansactionScreen
+// AddTRansactionScreen.kt
 
 package com.uaa.misgastosapp.ui
 
@@ -6,10 +6,13 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -38,18 +41,21 @@ fun AddTransactionScreen(
     categoryViewModel: CategoryViewModel = viewModel(),
     budgetViewModel: BudgetViewModel = viewModel()
 ) {
-    var title by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var rawAmount by remember { mutableStateOf("") }
-    var showError by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
+    var title by rememberSaveable { mutableStateOf("") }
+    var amount by rememberSaveable { mutableStateOf("") }
+    var rawAmount by rememberSaveable { mutableStateOf("") }
+    var showError by rememberSaveable { mutableStateOf(false) }
+    var errorMessage by rememberSaveable { mutableStateOf("") }
     val categories by categoryViewModel.categories.collectAsState()
-    var selectedCategory by remember { mutableStateOf<Category?>(null) }
-    var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedCategoryId by rememberSaveable { mutableStateOf<Int?>(null) }
+    val selectedCategory = categories.find { it.id == selectedCategoryId }
+    var categoryDropdownExpanded by rememberSaveable { mutableStateOf(false) }
+
     val numberFormat = NumberFormat.getNumberInstance(Locale.US)
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "PY")).apply { maximumFractionDigits = 0 }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -63,10 +69,7 @@ fun AddTransactionScreen(
                 ),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -75,9 +78,12 @@ fun AddTransactionScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -121,9 +127,7 @@ fun AddTransactionScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Categoría") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded)
-                    },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth()
@@ -136,7 +140,7 @@ fun AddTransactionScreen(
                     DropdownMenuItem(
                         text = { Text("Sin Categoría") },
                         onClick = {
-                            selectedCategory = null
+                            selectedCategoryId = null
                             categoryDropdownExpanded = false
                         }
                     )
@@ -144,7 +148,7 @@ fun AddTransactionScreen(
                         DropdownMenuItem(
                             text = { Text(category.name) },
                             onClick = {
-                                selectedCategory = category
+                                selectedCategoryId = category.id
                                 categoryDropdownExpanded = false
                             }
                         )
@@ -171,7 +175,6 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     val parsedAmount = rawAmount.toDoubleOrNull() ?: 0.0
-                    val currentExpenseAmount = if (parsedAmount < 0) parsedAmount * -1 else parsedAmount
 
                     when {
                         title.isBlank() -> {
@@ -184,24 +187,28 @@ fun AddTransactionScreen(
                         }
                         else -> {
                             showError = false
-                            transactionViewModel.addTransaction(
-                                title = title,
-                                amount = parsedAmount,
-                                date = LocalDate.now().toString(),
-                                categoryId = selectedCategory?.id
-                            )
 
-                            if (parsedAmount < 0 && selectedCategory != null) {
-                                coroutineScope.launch {
+
+                            coroutineScope.launch {
+
+                                transactionViewModel.addTransaction(
+                                    title = title,
+                                    amount = parsedAmount,
+                                    date = LocalDate.now().toString(),
+                                    categoryId = selectedCategoryId
+                                )
+
+
+                                val currentExpenseAmount = if (parsedAmount < 0) parsedAmount * -1 else parsedAmount
+                                if (parsedAmount < 0 && selectedCategory != null) {
                                     val monthYearStr = YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
-                                    val budgetEntity = budgetViewModel.getBudgetForCategory(selectedCategory!!.id, monthYearStr).firstOrNull()
+                                    val budgetEntity = budgetViewModel.getBudgetForCategory(selectedCategory.id, monthYearStr).firstOrNull()
 
                                     if (budgetEntity != null && budgetEntity.amount > 0) {
-
                                         val previousTransactions = transactionViewModel.transactions.firstOrNull() ?: emptyList()
                                         val spentBeforeThisTransaction = previousTransactions
                                             .filter {
-                                                it.categoryId == selectedCategory!!.id &&
+                                                it.categoryId == selectedCategory.id &&
                                                         it.date.startsWith(monthYearStr) &&
                                                         it.amount < 0
                                             }
@@ -213,20 +220,22 @@ fun AddTransactionScreen(
                                             val exceededBy = totalSpentAfterThisTransaction - budgetEntity.amount
                                             Toast.makeText(
                                                 context,
-                                                "¡Alerta! Has excedido el presupuesto de ${selectedCategory!!.name} en ${currencyFormat.format(exceededBy)}",
+                                                "¡Alerta! Has excedido el presupuesto de ${selectedCategory.name} en ${currencyFormat.format(exceededBy)}",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                         } else if (totalSpentAfterThisTransaction > budgetEntity.amount * 0.85) {
                                             Toast.makeText(
                                                 context,
-                                                "¡Cuidado! Te estás acercando al límite del presupuesto de ${selectedCategory!!.name}.",
+                                                "¡Cuidado! Te estás acercando al límite del presupuesto de ${selectedCategory.name}.",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                         }
                                     }
                                 }
+
+                                navController.popBackStack()
                             }
-                            navController.popBackStack()
+
                         }
                     }
                 }) {

@@ -214,7 +214,6 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
                         }
                     } catch (e: Exception) {
                         Log.e("RecurringVM", "Error processing item ${item.id}: ${e.message}")
-                        // Continuar con el siguiente item
                     }
                 }
             } catch (e: DateTimeParseException) {

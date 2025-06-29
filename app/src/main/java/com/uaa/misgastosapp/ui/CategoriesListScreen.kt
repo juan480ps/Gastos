@@ -5,6 +5,7 @@ package com.uaa.misgastosapp.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -46,7 +47,11 @@ fun CategoriesListScreen(navController: NavController, categoryViewModel: Catego
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate(Routes.ADD_CATEGORY) }) {
+            FloatingActionButton(onClick = {
+                navController.navigate(Routes.ADD_CATEGORY) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = CircleShape
+            ) {
                 Icon(Icons.Filled.Add, contentDescription = "Añadir Categoría")
             }
         }

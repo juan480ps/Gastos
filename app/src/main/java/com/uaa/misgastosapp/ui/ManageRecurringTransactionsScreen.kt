@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -57,8 +58,11 @@ fun ManageRecurringTransactionsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                navController.navigate(Routes.ADD_EDIT_RECURRING_TRANSACTION) // Navegar sin ID para añadir
-            }) {
+                navController.navigate(Routes.ADD_EDIT_RECURRING_TRANSACTION)
+            },
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = CircleShape
+            ) {
                 Icon(Icons.Filled.Add, contentDescription = "Añadir Recurrente")
             }
         }

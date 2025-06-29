@@ -18,4 +18,7 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     suspend fun getById(id: Int): TransactionEntity?
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE categoryId = :categoryId AND date LIKE :monthYearPattern AND amount < 0")
+    fun getSpentAmountForCategoryInMonth(categoryId: Int, monthYearPattern: String): Double?
 }
