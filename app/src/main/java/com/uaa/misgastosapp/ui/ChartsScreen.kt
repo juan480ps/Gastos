@@ -126,7 +126,7 @@ fun MPAndroidPieChart(pieChartDataList: List<PieChartData>) {
     val chartTextColor = if (isSystemInDarkTheme()) {
         Color.White
     } else {
-        Color.Black
+        Color.White // Black
     }
     AndroidView(
         factory = { ctx ->
