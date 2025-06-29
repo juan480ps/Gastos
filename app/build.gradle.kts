@@ -107,4 +107,7 @@ dependencies {
 
     // Encrypted SharedPreferences para almacenar el token de forma segura
     implementation ("androidx.security:security-crypto:1.1.0-alpha06")
+
+
+    implementation ("androidx.core:core-splashscreen:1.0.1")
 }

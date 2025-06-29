@@ -38,6 +38,8 @@ import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.runtime.LaunchedEffect
 import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.foundation.shape.CircleShape
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,7 +72,9 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("Hola, $userName") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (isOnline) MaterialTheme.colorScheme.primary else Color.Gray
+                    containerColor = if (isOnline) MaterialTheme.colorScheme.primary else Color.Gray,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White
                 ),
                 actions = {
                     if (!isOnline) {
@@ -102,7 +106,10 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 navController.navigate(Routes.ADD_TRANSACTION)
-            }) {
+            },
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = CircleShape
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar Gasto")
             }
         }
@@ -188,6 +195,7 @@ fun HomeScreen(
 fun BudgetStatusItem(budget: Budget, currencyFormat: NumberFormat) {
     val progressColor = when {
         budget.progress > 1f -> MaterialTheme.colorScheme.error
+        budget.progress == 1f -> Color(0xFFFFA000)
         budget.progress > 0.85f -> Color(0xFFFFA000)
         else -> MaterialTheme.colorScheme.primary
     }
@@ -218,9 +226,16 @@ fun BudgetStatusItem(budget: Budget, currencyFormat: NumberFormat) {
                 color = progressColor,
                 modifier = Modifier.align(Alignment.End)
             )
-        } else if (budget.progress > 0.85f) {
+        } else if (budget.progress > 0.85f && budget.progress < 1f) {
             Text(
                 "¡Cuidado! Cercano al límite.",
+                style = MaterialTheme.typography.bodySmall,
+                color = progressColor,
+                modifier = Modifier.align(Alignment.End)
+            )
+        } else if (budget.progress == 1f) {
+            Text(
+                "¡Cuidado! Límite alcanzado.",
                 style = MaterialTheme.typography.bodySmall,
                 color = progressColor,
                 modifier = Modifier.align(Alignment.End)

@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import java.text.NumberFormat
 import java.util.*
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun SummaryCard(balance: Double) {
@@ -23,7 +24,7 @@ fun SummaryCard(balance: Double) {
             .fillMaxWidth()
             .height(120.dp),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Column(
             Modifier
@@ -34,14 +35,13 @@ fun SummaryCard(balance: Double) {
             Text(
                 "Balance Total",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White
             )
             Text(
-
                 formattedBalance,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.White
             )
         }
     }

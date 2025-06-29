@@ -16,12 +16,17 @@ import com.uaa.misgastosapp.utils.SecureSessionManager
 import com.uaa.misgastosapp.ui.theme.GastosTheme
 import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
 import kotlinx.coroutines.launch
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+
 
 class MainActivity : ComponentActivity() {
     private val recurringTransactionViewModel: RecurringTransactionViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
 
         val sessionManager = SecureSessionManager(this)
