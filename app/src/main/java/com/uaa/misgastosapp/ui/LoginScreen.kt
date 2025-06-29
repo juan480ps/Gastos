@@ -29,6 +29,7 @@ import com.uaa.misgastosapp.R
 import com.uaa.misgastosapp.Routes
 import com.uaa.misgastosapp.ui.viewmodel.AuthViewModel
 import android.widget.Toast
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -212,6 +213,14 @@ fun LoginScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Se requiere conexión a internet para iniciar sesión.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
 
                 TextButton(
                     onClick = { navController.navigate(Routes.REGISTER) },

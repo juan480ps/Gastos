@@ -21,12 +21,30 @@ android {
     }
 
     buildTypes {
-        release {
-            isMinifyEnabled = false
+
+        getByName("release") {
+
+            /*isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )*/
+
+            // Activa la ofuscación y reducción de código con R8
+            isMinifyEnabled = true
+
+            // para eliminar recursos (imágenes, layouts) que no se usan.
+            isShrinkResources = true
+
+            // Especifica los archivos de reglas de ProGuard/R8
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            getByName("debug") {
+                isMinifyEnabled = false
+            }
         }
     }
     compileOptions {
