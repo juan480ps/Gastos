@@ -1,37 +1,40 @@
 // HomeScreen
 
 package com.uaa.misgastosapp.ui
-
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.uaa.misgastosapp.Routes
 import com.uaa.misgastosapp.model.Budget
 import com.uaa.misgastosapp.ui.viewmodel.AuthViewModel
 import com.uaa.misgastosapp.ui.viewmodel.BudgetViewModel
-import com.uaa.misgastosapp.ui.viewmodel.TransactionViewModel
 import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
+import com.uaa.misgastosapp.ui.viewmodel.TransactionViewModel
 import com.uaa.misgastosapp.utils.Result
 import java.text.NumberFormat
+import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
-import android.widget.Toast
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.saveable.rememberSaveable
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,25 +54,26 @@ fun HomeScreen(
         maximumFractionDigits = 0
     }
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
+    val monthHeaderFormatter = DateTimeFormatter.ofPattern("MMMM 'de' yyyy", Locale("es", "ES"))
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
     val userName = authViewModel.getCurrentUserName() ?: "Usuario"
     val isOnline by authViewModel.isOnlineMode.collectAsState()
-    val context = LocalContext.current
 
-    LaunchedEffect(operationStatus) {
-        val status = operationStatus
-        when (status) {
-            is Result.Success -> {
-                Toast.makeText(context, status.data, Toast.LENGTH_SHORT).show()
-                transactionViewModel.clearOperationStatus()
+    val context = LocalContext.current
+            LaunchedEffect(operationStatus) {
+                val status = operationStatus
+                when (status) {
+                    is Result.Success -> {
+                        Toast.makeText(context, status.data, Toast.LENGTH_SHORT).show()
+                        transactionViewModel.clearOperationStatus()
+                    }
+                    is Result.Error -> {
+                        Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
+                        transactionViewModel.clearOperationStatus()
+                    }
+                    else -> {}
+                }
             }
-            is Result.Error -> {
-                Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
-                transactionViewModel.clearOperationStatus()
-            }
-            else -> {}
-        }
-    }
 
     LaunchedEffect(Unit) {
         recurringTransactionViewModel.processDueRecurringTransactions()
@@ -179,11 +183,49 @@ fun HomeScreen(
                     }
                 }
             } else {
-                items(transactions.take(10)) { tx ->
-                    TransactionItem(
-                        transaction = tx,
-                        onDelete = { transactionViewModel.deleteTransaction(tx.id) }
-                    )
+                val dateParser = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+                val groupedTransactions = transactions
+                    .groupBy {
+                        try {
+                            YearMonth.from(LocalDate.parse(it.date, dateParser))
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    .filterKeys { it != null }
+                    .toSortedMap(compareByDescending { it!! })
+
+                groupedTransactions.forEach { (yearMonth, monthTransactions) ->
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp, bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = yearMonth!!.format(monthHeaderFormatter)
+                                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "ES")) else it.toString() },
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value - 1).sp,                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                            Divider(
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    items(monthTransactions) { tx ->
+                        TransactionItem(
+                            transaction = tx,
+                            onDelete = { transactionViewModel.deleteTransaction(tx.id) }
+                        )
+                    }
                 }
             }
         }
@@ -214,7 +256,6 @@ fun HomeScreen(
         )
     }
 }
-
 @Composable
 fun BudgetStatusItem(budget: Budget, currencyFormat: NumberFormat) {
     val progressColor = when {
