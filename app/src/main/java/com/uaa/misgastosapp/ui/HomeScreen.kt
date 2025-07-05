@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,6 +40,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.Locale
+
 private data class BottomNavItem(
     val label: String,
     val icon: ImageVector,
@@ -65,6 +67,7 @@ fun HomeScreen(
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
     val monthHeaderFormatter = DateTimeFormatter.ofPattern("MMMM 'de' yyyy", Locale("es", "ES"))
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
+    var collapsedMonths by rememberSaveable { mutableStateOf(emptySet<YearMonth>()) }
     val userName = authViewModel.getCurrentUserName() ?: "Usuario"
     val isOnline by authViewModel.isOnlineMode.collectAsState()
     val context = LocalContext.current
@@ -122,7 +125,7 @@ fun HomeScreen(
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 NavigationBar(
                     modifier = Modifier.clip(RoundedCornerShape(24.dp)),
-                    // --- MODIFICACIÓN DE COLOR DE FONDO ---
+
                     containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     navigationItems.forEach { item ->
@@ -132,11 +135,11 @@ fun HomeScreen(
                             icon = { Icon(item.icon, contentDescription = item.label) },
                             label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
                             alwaysShowLabel = true,
-                            // --- MODIFICACIÓN DE COLORES DE ÍCONOS Y TEXTO ---
+
                             colors = NavigationBarItemDefaults.colors(
                                 unselectedIconColor = Color.White,
                                 unselectedTextColor = Color.White,
-                                indicatorColor = Color.Transparent // Evita el highlight de color al presionar
+                                indicatorColor = Color.Transparent
                             )
                         )
                     }
@@ -148,7 +151,8 @@ fun HomeScreen(
                 onClick = {
                     navController.navigate(Routes.ADD_TRANSACTION)
                 },
-                containerColor = MaterialTheme.colorScheme.primary,
+                /*containerColor = MaterialTheme.colorScheme.primary,*/
+                containerColor = Color(android.graphics.Color.parseColor("#c2b1f0")),
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar Gasto")
@@ -227,12 +231,19 @@ fun HomeScreen(
 
                 groupedTransactions.forEach { (yearMonth, monthTransactions) ->
                     item {
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 16.dp, bottom = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                .padding(top = 16.dp, bottom = 8.dp)
+                                .clickable {
+                                    collapsedMonths = if (yearMonth!! in collapsedMonths) {
+                                        collapsedMonths - yearMonth
+                                    } else {
+                                        collapsedMonths + yearMonth
+                                    }
+                                },
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = yearMonth!!.format(monthHeaderFormatter)
@@ -241,20 +252,31 @@ fun HomeScreen(
                                     fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value - 1).sp,
                                     fontWeight = FontWeight.SemiBold
                                 ),
-                                color = MaterialTheme.colorScheme.outline
+                                color = MaterialTheme.colorScheme.outline,
+                                modifier = Modifier.weight(1f)
                             )
                             Divider(
                                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                                 modifier = Modifier.weight(1f)
                             )
+
+                            val isCollapsed = yearMonth in collapsedMonths
+                            Icon(
+                                imageVector = if (isCollapsed) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                contentDescription = if (isCollapsed) "Expandir mes" else "Minimizar mes",
+                                tint = MaterialTheme.colorScheme.outline,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
                         }
                     }
 
-                    items(monthTransactions) { tx ->
-                        TransactionItem(
-                            transaction = tx,
-                            onDelete = { transactionViewModel.deleteTransaction(tx.id) }
-                        )
+                    if (yearMonth !in collapsedMonths) {
+                        items(monthTransactions) { tx ->
+                            TransactionItem(
+                                transaction = tx,
+                                onDelete = { transactionViewModel.deleteTransaction(tx.id) }
+                            )
+                        }
                     }
                 }
             }
