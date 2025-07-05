@@ -1,6 +1,7 @@
 // HomeScreen
 
 package com.uaa.misgastosapp.ui
+import android.annotation.SuppressLint
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -15,7 +17,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,7 +39,12 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.Locale
-
+private data class BottomNavItem(
+    val label: String,
+    val icon: ImageVector,
+    val route: String
+)
+@SuppressLint("SuspiciousIndentation")
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,22 +67,28 @@ fun HomeScreen(
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
     val userName = authViewModel.getCurrentUserName() ?: "Usuario"
     val isOnline by authViewModel.isOnlineMode.collectAsState()
-
     val context = LocalContext.current
-            LaunchedEffect(operationStatus) {
-                val status = operationStatus
-                when (status) {
-                    is Result.Success -> {
-                        Toast.makeText(context, status.data, Toast.LENGTH_SHORT).show()
-                        transactionViewModel.clearOperationStatus()
-                    }
-                    is Result.Error -> {
-                        Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
-                        transactionViewModel.clearOperationStatus()
-                    }
-                    else -> {}
-                }
+    val navigationItems = listOf(
+        BottomNavItem("Gráficos", Icons.Default.PieChart, Routes.CHARTS_SCREEN),
+        BottomNavItem("Recurrentes", Icons.Default.Autorenew, Routes.MANAGE_RECURRING_TRANSACTIONS),
+        BottomNavItem("Presupuestos", Icons.Default.Assessment, Routes.MANAGE_BUDGETS),
+        BottomNavItem("Categorías", Icons.Default.Category, Routes.CATEGORIES_LIST),
+    )
+
+    LaunchedEffect(operationStatus) {
+        val status = operationStatus
+        when (status) {
+            is Result.Success -> {
+                Toast.makeText(context, status.data, Toast.LENGTH_SHORT).show()
+                transactionViewModel.clearOperationStatus()
             }
+            is Result.Error -> {
+                Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
+                transactionViewModel.clearOperationStatus()
+            }
+            else -> {}
+        }
+    }
 
     LaunchedEffect(Unit) {
         recurringTransactionViewModel.processDueRecurringTransactions()
@@ -97,28 +112,42 @@ fun HomeScreen(
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
-                    IconButton(onClick = { navController.navigate(Routes.CHARTS_SCREEN) }) {
-                        Icon(Icons.Filled.PieChart, contentDescription = "Ver Gráficos")
-                    }
-                    IconButton(onClick = { navController.navigate(Routes.MANAGE_RECURRING_TRANSACTIONS) }) {
-                        Icon(Icons.Filled.Autorenew, contentDescription = "Gestionar Recurrentes")
-                    }
-                    IconButton(onClick = { navController.navigate(Routes.MANAGE_BUDGETS) }) {
-                        Icon(Icons.Filled.Assessment, contentDescription = "Gestionar Presupuestos")
-                    }
-                    IconButton(onClick = { navController.navigate(Routes.CATEGORIES_LIST) }) {
-                        Icon(Icons.Filled.Category, contentDescription = "Gestionar Categorías")
-                    }
                     IconButton(onClick = { showLogoutDialog = true }) {
                         Icon(Icons.Filled.ExitToApp, contentDescription = "Cerrar Sesión")
                     }
                 }
             )
         },
+        bottomBar = {
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                NavigationBar(
+                    modifier = Modifier.clip(RoundedCornerShape(24.dp)),
+                    // --- MODIFICACIÓN DE COLOR DE FONDO ---
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    navigationItems.forEach { item ->
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { navController.navigate(item.route) },
+                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
+                            alwaysShowLabel = true,
+                            // --- MODIFICACIÓN DE COLORES DE ÍCONOS Y TEXTO ---
+                            colors = NavigationBarItemDefaults.colors(
+                                unselectedIconColor = Color.White,
+                                unselectedTextColor = Color.White,
+                                indicatorColor = Color.Transparent // Evita el highlight de color al presionar
+                            )
+                        )
+                    }
+                }
+            }
+        },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                navController.navigate(Routes.ADD_TRANSACTION)
-            },
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(Routes.ADD_TRANSACTION)
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 shape = CircleShape
             ) {
@@ -209,7 +238,8 @@ fun HomeScreen(
                                 text = yearMonth!!.format(monthHeaderFormatter)
                                     .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "ES")) else it.toString() },
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value - 1).sp,                                    fontWeight = FontWeight.SemiBold
+                                    fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value - 1).sp,
+                                    fontWeight = FontWeight.SemiBold
                                 ),
                                 color = MaterialTheme.colorScheme.outline
                             )
