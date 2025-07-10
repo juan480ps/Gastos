@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.uaa.misgastosapp.Routes
 import com.uaa.misgastosapp.model.Budget
+import com.uaa.misgastosapp.model.Transaction
 import com.uaa.misgastosapp.ui.viewmodel.AuthViewModel
 import com.uaa.misgastosapp.ui.viewmodel.BudgetViewModel
 import com.uaa.misgastosapp.ui.viewmodel.RecurringTransactionViewModel
@@ -68,6 +69,11 @@ fun HomeScreen(
     val monthHeaderFormatter = DateTimeFormatter.ofPattern("MMMM 'de' yyyy", Locale("es", "ES"))
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
     var collapsedMonths by rememberSaveable { mutableStateOf(emptySet<YearMonth>()) }
+
+
+    var transactionToDelete by remember { mutableStateOf<Transaction?>(null) }
+    var showDeleteTransactionDialog by rememberSaveable { mutableStateOf(false) }
+
     val userName = authViewModel.getCurrentUserName() ?: "Usuario"
     val isOnline by authViewModel.isOnlineMode.collectAsState()
     val context = LocalContext.current
@@ -125,7 +131,6 @@ fun HomeScreen(
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 NavigationBar(
                     modifier = Modifier.clip(RoundedCornerShape(24.dp)),
-
                     containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     navigationItems.forEach { item ->
@@ -135,7 +140,6 @@ fun HomeScreen(
                             icon = { Icon(item.icon, contentDescription = item.label) },
                             label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
                             alwaysShowLabel = true,
-
                             colors = NavigationBarItemDefaults.colors(
                                 unselectedIconColor = Color.White,
                                 unselectedTextColor = Color.White,
@@ -151,7 +155,6 @@ fun HomeScreen(
                 onClick = {
                     navController.navigate(Routes.ADD_TRANSACTION)
                 },
-                /*containerColor = MaterialTheme.colorScheme.primary,*/
                 containerColor = Color(android.graphics.Color.parseColor("#c2b1f0")),
                 shape = CircleShape
             ) {
@@ -231,7 +234,6 @@ fun HomeScreen(
 
                 groupedTransactions.forEach { (yearMonth, monthTransactions) ->
                     item {
-
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -259,7 +261,6 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                                 modifier = Modifier.weight(1f)
                             )
-
                             val isCollapsed = yearMonth in collapsedMonths
                             Icon(
                                 imageVector = if (isCollapsed) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
@@ -271,10 +272,14 @@ fun HomeScreen(
                     }
 
                     if (yearMonth !in collapsedMonths) {
-                        items(monthTransactions) { tx ->
+                        items(monthTransactions, key = { it.id }) { tx ->
                             TransactionItem(
                                 transaction = tx,
-                                onDelete = { transactionViewModel.deleteTransaction(tx.id) }
+                                onDelete = {
+
+                                    transactionToDelete = tx
+                                    showDeleteTransactionDialog = true
+                                }
                             )
                         }
                     }
@@ -291,6 +296,7 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        showLogoutDialog = false
                         authViewModel.logout()
                         navController.navigate(Routes.LOGIN) {
                             popUpTo(0) { inclusive = true }
@@ -307,7 +313,40 @@ fun HomeScreen(
             }
         )
     }
+
+    if (showDeleteTransactionDialog && transactionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteTransactionDialog = false
+                transactionToDelete = null
+            },
+            title = { Text("Confirmar Eliminación") },
+            text = { Text("¿Estás seguro de que quieres eliminar la transacción '${transactionToDelete?.title}'? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        transactionToDelete?.let { transactionViewModel.deleteTransaction(it.id) }
+                        showDeleteTransactionDialog = false
+                        transactionToDelete = null
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteTransactionDialog = false
+                        transactionToDelete = null
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
+
 @Composable
 fun BudgetStatusItem(budget: Budget, currencyFormat: NumberFormat) {
     val progressColor = when {
