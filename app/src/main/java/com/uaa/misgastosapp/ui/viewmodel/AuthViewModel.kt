@@ -10,27 +10,30 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.uaa.misgastosapp.data.AppDatabase
-import com.uaa.misgastosapp.data.UserEntity
+import com.uaa.misgastosapp.data.repository.AuthRepository
 import com.uaa.misgastosapp.network.NetworkModule
-import com.uaa.misgastosapp.network.model.*
+import com.uaa.misgastosapp.network.model.ErrorResponse
 import com.uaa.misgastosapp.utils.SecureSessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import retrofit2.Response
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    private val userDao = AppDatabase.getInstance(application).userDao()
     private val sessionManager = SecureSessionManager(application)
-    private val apiService = NetworkModule.apiService
+    private val authRepository: AuthRepository
 
     init {
+        // Inicializar NetworkModule primero para asegurar que apiService esté listo
         NetworkModule.initialize(sessionManager)
+        val db = AppDatabase.getInstance(application)
+        authRepository = AuthRepository(
+            apiService = NetworkModule.apiService,
+            userDao = db.userDao(),
+            sessionManager = sessionManager
+        )
     }
 
     private val _isLoggedIn = MutableStateFlow(sessionManager.isLoggedIn())
@@ -54,80 +57,24 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                 if (_isOnlineMode.value) {
                     try {
-                        Log.d("AuthVM", "Attempting login with: $email")
-                        val response = apiService.login(LoginRequest(identifier = email, password = password))
-
-                        if (response.isSuccessful && response.body() != null) {
-                            val token = response.body()!!.accessToken
-                            Log.d("AuthVM", "Login successful, token received: ${token.take(20)}...")
-                            sessionManager.saveToken(token)
-                            NetworkModule.updateApiClient()
-
-                            try {
-                                val profileResponse = apiService.getProfile()
-
-                                if (profileResponse.isSuccessful && profileResponse.body() != null) {
-                                    val profile = profileResponse.body()!!
-                                    Log.d("AuthVM", "Profile obtained successfully")
-
-                                    sessionManager.saveUserSession(
-                                        userId = profile.id,
-                                        email = profile.email,
-                                        name = profile.fullName,
-                                        username = profile.username,
-                                        accessToken = token
-                                    )
-
-                                    val localUser = UserEntity(
-                                        id = profile.id,
-                                        email = profile.email,
-                                        password = hashPassword(password),
-                                        name = profile.fullName,
-                                        createdAt = profile.createdAt
-                                    )
-                                    userDao.insert(localUser)
-
-                                    _isLoggedIn.value = true
-                                    onSuccess()
-                                } else {
-                                    Log.e("AuthVM", "Profile request failed: ${profileResponse.code()}")
-                                    handleApiError(profileResponse, onError)
-                                }
-                            } catch (e: Exception) {
-                                Log.e("AuthVM", "Error getting profile: ${e.message}")
-
-                                sessionManager.saveUserSession(
-                                    userId = 0,
-                                    email = email,
-                                    name = email.substringBefore("@"),
-                                    username = email.substringBefore("@"),
-                                    accessToken = token
-                                )
-                                _isLoggedIn.value = true
-                                onSuccess()
-                            }
-                        } else {
-                            Log.e("AuthVM", "Login failed: ${response.code()}")
-                            handleApiError(response, onError)
-                        }
+                        authRepository.login(email, password)
+                        _isLoggedIn.value = true
+                        onSuccess()
                     } catch (e: UnknownHostException) {
-                        Log.e("AuthVM", "No internet connection")
+                        Log.e("AuthVM", "Sin conexión a internet, intentando login offline.", e)
                         _isOnlineMode.value = false
                         performOfflineLogin(email, password, onSuccess, onError)
                     } catch (e: SocketTimeoutException) {
-                        Log.e("AuthVM", "Connection timeout")
+                        Log.e("AuthVM", "Timeout, intentando login offline.", e)
                         _isOnlineMode.value = false
                         performOfflineLogin(email, password, onSuccess, onError)
                     } catch (e: Exception) {
-                        Log.e("AuthVM", "Unexpected error during login: ${e.message}", e)
-                        onError("Error inesperado: ${e.message}")
+                        Log.e("AuthVM", "Error en login online: ${e.message}", e)
+                        onError(parseApiErrorMessage(e.message ?: "Error desconocido"))
                     }
                 } else {
                     performOfflineLogin(email, password, onSuccess, onError)
                 }
-            } catch (e: Exception) {
-                Log.e("AuthVM", "Login error: ${e.message}", e)
-                onError("Error al iniciar sesión: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -135,22 +82,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun performOfflineLogin(email: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val hashedPassword = hashPassword(password)
-        val user = userDao.login(email.lowercase(), hashedPassword)
-
-        if (user != null) {
-
-            sessionManager.saveUserSession(
-                userId = user.id,
-                email = user.email,
-                name = user.name,
-                username = email.substringBefore("@"),
-                accessToken = "offline_mode"
-            )
+        try {
+            authRepository.loginOffline(email, password)
             _isLoggedIn.value = true
             onSuccess()
-        } else {
-            onError("Email o contraseña incorrectos (modo offline)")
+        } catch (e: Exception) {
+            Log.e("AuthVM", "Error en login offline: ${e.message}", e)
+            onError(e.message ?: "Error desconocido en modo offline")
         }
     }
 
@@ -160,67 +98,23 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-
                 when {
-                    name.isBlank() || email.isBlank() || username.isBlank() || password.isBlank() -> {
+                    name.isBlank() || email.isBlank() || username.isBlank() || password.isBlank() ->
                         onError("Por favor completa todos los campos")
-                    }
-                    password != confirmPassword -> {
+                    password != confirmPassword ->
                         onError("Las contraseñas no coinciden")
-                    }
-                    !isPasswordValid(password) -> {
+                    !isPasswordValid(password) ->
                         onError("La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número")
-                    }
-                    !isValidEmail(email) -> {
+                    !isValidEmail(email) ->
                         onError("Email inválido")
-                    }
                     else -> {
-                        if (_isOnlineMode.value) {
-                            try {
-                                Log.d("AuthVM", "Attempting registration for: $email")
-                                val response = apiService.register(
-                                    RegisterRequest(
-                                        fullName = name,
-                                        email = email,
-                                        username = username,
-                                        password = password
-                                    )
-                                )
-
-                                if (response.isSuccessful) {
-                                    Log.d("AuthVM", "Registration successful")
-
-                                    val hashedPassword = hashPassword(password)
-                                    val newUser = UserEntity(
-                                        email = email.lowercase(),
-                                        password = hashedPassword,
-                                        name = name,
-                                        createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                                    )
-                                    userDao.insert(newUser)
-
-                                    onSuccess()
-                                } else {
-                                    handleApiError(response, onError)
-                                }
-                            } catch (e: UnknownHostException) {
-                                _isOnlineMode.value = false
-                                onError("Sin conexión a internet. Registro no disponible en modo offline.")
-                            } catch (e: SocketTimeoutException) {
-                                _isOnlineMode.value = false
-                                onError("Tiempo de conexión agotado. Intenta nuevamente.")
-                            } catch (e: Exception) {
-                                Log.e("AuthVM", "Registration error: ${e.message}", e)
-                                onError("Error durante el registro: ${e.message}")
-                            }
-                        } else {
-                            onError("El registro requiere conexión a internet")
-                        }
+                        authRepository.register(name, email, username, password)
+                        onSuccess()
                     }
                 }
             } catch (e: Exception) {
-                Log.e("AuthVM", "Register error: ${e.message}", e)
-                onError("Error al registrar: ${e.message}")
+                Log.e("AuthVM", "Error en registro: ${e.message}", e)
+                onError(parseApiErrorMessage(e.message ?: "Error desconocido"))
             } finally {
                 _isLoading.value = false
             }
@@ -229,61 +123,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun logout() {
         viewModelScope.launch {
-            try {
-                if (_isOnlineMode.value && sessionManager.getAccessToken() != "offline_mode") {
-                    Log.d("AuthVM", "Attempting logout on server")
-                    apiService.logout()
-                }
-            } catch (e: Exception) {
-                Log.e("AuthVM", "Logout error: ${e.message}")
-            } finally {
-                sessionManager.logout()
-                _isLoggedIn.value = false
-            }
+            authRepository.logout()
+            _isLoggedIn.value = false
         }
     }
 
-    private fun <T> handleApiError(response: Response<T>, onError: (String) -> Unit) {
-        val errorBody = response.errorBody()?.string()
-        Log.e("AuthVM", "API Error - Code: ${response.code()}, Body: $errorBody")
-
-        val errorMessage = try {
+    private fun parseApiErrorMessage(rawMessage: String): String {
+        return try {
+            val errorBody = rawMessage.substringAfter("-").trim()
             val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
-            error.msg ?: error.error ?: "Error desconocido"
+            error.msg ?: error.error ?: "Error del servidor"
         } catch (e: Exception) {
-            when (response.code()) {
-                401 -> "Credenciales inválidas"
-                409 -> "El email o usuario ya existe"
-                429 -> "Demasiados intentos. Espera un momento"
-                else -> "Error del servidor (${response.code()})"
-            }
+            if (rawMessage.contains("401")) "Credenciales inválidas"
+            else if (rawMessage.contains("409")) "El email o usuario ya existe"
+            else "Ocurrió un error inesperado"
         }
-        onError(errorMessage)
     }
 
-    fun getCurrentUserName(): String? {
-        return sessionManager.getUserName()
-    }
+    fun getCurrentUserName(): String? = sessionManager.getUserName()
+    fun getCurrentUserId(): Int = sessionManager.getUserId()
 
-    fun getCurrentUserId(): Int {
-        return sessionManager.getUserId()
-    }
-
-    fun isInOnlineMode(): Boolean {
-        return _isOnlineMode.value
-    }
-
-    private fun hashPassword(password: String): String {
-        val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
-        return bytes.fold("") { str, it -> str + "%02x".format(it) }
-    }
-
-    private fun isValidEmail(email: String): Boolean {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
-
-    private fun isPasswordValid(password: String): Boolean {
-        val passwordPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$"
-        return password.matches(passwordPattern.toRegex())
-    }
+    private fun isValidEmail(email: String): Boolean = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    private fun isPasswordValid(password: String): Boolean = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$".toRegex().matches(password)
 }

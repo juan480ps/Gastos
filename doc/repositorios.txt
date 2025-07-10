@@ -1,0 +1,7 @@
+/* Repositorio del proyecto principal "Mis Gastos App" */
+
+https://github.com/juan480ps/mis_gastos_app.git
+
+/* Repositorio del proyecto backend para login escrito es python */
+
+https://github.com/juan480ps/gastos_back_api.git

@@ -1,9 +1,8 @@
-// BadgetViewModel
+// BudgetViewModel
 
 package com.uaa.misgastosapp.ui.viewmodel
 
 import android.app.Application
-import android.database.sqlite.SQLiteException
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -11,8 +10,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.uaa.misgastosapp.data.AppDatabase
 import com.uaa.misgastosapp.data.BudgetEntity
+import com.uaa.misgastosapp.data.repository.BudgetRepository
 import com.uaa.misgastosapp.model.Budget
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.YearMonth
@@ -20,8 +19,13 @@ import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 class BudgetViewModel(application: Application) : AndroidViewModel(application) {
-    private val budgetDao = AppDatabase.getInstance(application).budgetDao()
-    private val categoryDao = AppDatabase.getInstance(application).categoryDao()
+    private val repository: BudgetRepository
+
+    init {
+        val db = AppDatabase.getInstance(application)
+        repository = BudgetRepository(db.budgetDao(), db.categoryDao(), db.transactionDao())
+    }
+
     private val _currentMonthYear = MutableStateFlow(YearMonth.now())
     val currentMonthYear: StateFlow<YearMonth> = _currentMonthYear.asStateFlow()
 
@@ -29,18 +33,22 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         it.format(DateTimeFormatter.ofPattern("yyyy-MM"))
     }
 
+    val budgetsWithSpendingForCurrentMonth: StateFlow<List<Budget>> =
+        repository.getBudgetsWithSpendingForMonth(currentMonthYearString)
+            .catch { e ->
+                Log.e("BudgetVM", "Error en el flujo de presupuestos", e)
+                emit(emptyList())
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun setCurrentMonthYear(yearMonth: YearMonth) {
-        try {
-            _currentMonthYear.value = yearMonth
-        } catch (e: Exception) {
-            Log.e("BudgetVM", "Error setting month year: ${e.message}")
-        }
+        _currentMonthYear.value = yearMonth
     }
 
     fun getBudgetForCategory(categoryId: Int, monthYear: String): Flow<BudgetEntity?> {
-        return budgetDao.getBudgetForCategoryAndMonth(categoryId, monthYear)
+        return repository.getBudgetForCategoryAndMonth(categoryId, monthYear)
             .catch { e ->
-                Log.e("BudgetVM", "Error getting budget: ${e.message}")
+                Log.e("BudgetVM", "Error al obtener presupuesto para categoría", e)
                 emit(null)
             }
     }
@@ -48,65 +56,12 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     fun setBudget(categoryId: Int, amount: Double, monthYear: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                if (amount < 0) {
-                    onError("El presupuesto no puede ser negativo.")
-                    return@launch
-                }
-
-                budgetDao.insertOrUpdate(
-                    BudgetEntity(
-                        categoryId = categoryId,
-                        monthYear = monthYear,
-                        amount = amount
-                    )
-                )
+                repository.setBudget(categoryId, amount, monthYear)
                 onSuccess()
-            } catch (e: SQLiteException) {
-                Log.e("BudgetVM", "Database error: ${e.message}")
-                onError("Error al guardar el presupuesto en la base de datos.")
             } catch (e: Exception) {
-                Log.e("BudgetVM", "Unexpected error: ${e.message}")
-                onError("Error inesperado al guardar el presupuesto.")
+                Log.e("BudgetVM", "Error al establecer presupuesto", e)
+                onError(e.message ?: "Error inesperado.")
             }
         }
     }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val budgetsWithSpendingForCurrentMonth: Flow<List<Budget>> = currentMonthYearString.flatMapLatest { monthStr ->
-        combine(
-            categoryDao.getAll(),
-            budgetDao.getBudgetsForMonth(monthStr),
-            getApplication<Application>().let { app ->
-                AppDatabase.getInstance(app).transactionDao().getAll()
-            }
-        ) { categoriesEntities, budgetEntities, transactionEntities ->
-            try {
-                val transactionsForMonth = transactionEntities.filter {
-                    it.date.startsWith(monthStr) && it.amount < 0
-                }
-
-                categoriesEntities.map { categoryEntity ->
-                    val budgetEntity = budgetEntities.find { it.categoryId == categoryEntity.id }
-                    val spentAmount = transactionsForMonth
-                        .filter { it.categoryId == categoryEntity.id }
-                        .sumOf { it.amount * -1 }
-                    val budgetAmount = budgetEntity?.amount ?: 0.0
-                    Budget(
-                        id = budgetEntity?.id ?: 0,
-                        categoryId = categoryEntity.id,
-                        categoryName = categoryEntity.name,
-                        monthYear = monthStr,
-                        amount = budgetAmount,
-                        spentAmount = spentAmount
-                    )
-                }.sortedBy { it.categoryName }
-            } catch (e: Exception) {
-                Log.e("BudgetVM", "Error calculating budgets: ${e.message}")
-                emptyList()
-            }
-        }.catch { e ->
-            Log.e("BudgetVM", "Flow error: ${e.message}")
-            emit(emptyList())
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }

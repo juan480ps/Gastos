@@ -2,8 +2,6 @@
 
 package com.uaa.misgastosapp.data.repository
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.uaa.misgastosapp.data.BudgetDao
 import com.uaa.misgastosapp.data.BudgetEntity
 import com.uaa.misgastosapp.data.CategoryDao
@@ -12,15 +10,13 @@ import com.uaa.misgastosapp.model.Budget
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 
-@RequiresApi(Build.VERSION_CODES.O)
 class BudgetRepository(
     private val budgetDao: BudgetDao,
     private val categoryDao: CategoryDao,
     private val transactionDao: TransactionDao
 ) {
-    fun getBudgetsWithSpending(monthYearFlow: Flow<String>): Flow<List<Budget>> {
+    fun getBudgetsWithSpendingForMonth(monthYearFlow: Flow<String>): Flow<List<Budget>> {
         return monthYearFlow.flatMapLatest { monthStr ->
             combine(
                 categoryDao.getAll(),
@@ -52,7 +48,7 @@ class BudgetRepository(
 
     suspend fun setBudget(categoryId: Int, amount: Double, monthYear: String) {
         if (amount < 0) {
-            throw IllegalArgumentException("Budget amount cannot be negative.")
+            throw IllegalArgumentException("El presupuesto no puede ser negativo.")
         }
         val budgetEntity = BudgetEntity(
             categoryId = categoryId,

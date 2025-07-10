@@ -1,0 +1,61 @@
+Resumen de la Aplicación: "Mis Gastos" 
+
+1. Objetivo de la Aplicación 
+
+"Mis Gastos" es una aplicación móvil nativa para Android diseñada para ofrecer a los usuarios una herramienta intuitiva, potente y segura para la gestión integral de sus finanzas personales. El objetivo principal es proporcionar una visión clara y detallada de los ingresos y gastos, permitiendo a los usuarios tomar el control de su salud financiera, alcanzar sus metas de ahorro y tomar decisiones económicas más informadas en su día a día. 
+
+La aplicación busca simplificar el complejo proceso de seguimiento financiero, eliminando la necesidad de hojas de cálculo o métodos manuales propensos a errores, y centralizando toda la información financiera en un único lugar accesible y fácil de usar. 
+
+2. Funciones Más Relevantes 
+
+"Mis Gastos" se estructura en torno a un conjunto de funcionalidades clave que trabajan de forma sinérgica para ofrecer una experiencia completa: 
+
+Registro de Transacciones: 
+
+Permite registrar rápidamente tanto ingresos como gastos. 
+
+Cada transacción se puede asociar con un título descriptivo, un monto y una categoría específica para un análisis detallado posterior. 
+
+El balance total se actualiza en tiempo real en la pantalla principal, ofreciendo una vista inmediata del estado financiero actual. 
+
+Gestión de Categorías: 
+
+Los usuarios pueden crear, ver y eliminar sus propias categorías de gastos (Ej: "Alimentación", "Transporte", "Ocio"). 
+
+Esta personalización permite adaptar la aplicación a los hábitos de consumo individuales de cada usuario, facilitando un seguimiento más preciso. 
+
+Sistema de Presupuestos Mensuales: 
+
+Permite establecer límites de gasto mensuales para cada categoría. 
+
+La aplicación proporciona un seguimiento visual del progreso de cada presupuesto, con barras de progreso y alertas de color que indican si el usuario se está acercando, ha alcanzado o ha excedido el límite. 
+
+Esta función es fundamental para fomentar la disciplina financiera y ayudar a los usuarios a mantenerse dentro de sus metas de gasto. 
+
+ 
+
+Transacciones Recurrentes: 
+
+Automatiza el registro de ingresos y gastos fijos (Ej:  pago de alquiler, suscripciones). 
+
+Los usuarios pueden configurar la frecuencia (actualmente mensual), el monto y la duración de estas transacciones, liberándolos de la tarea repetitiva de registrarlas manualmente. 
+
+La aplicación procesa automáticamente estas transacciones en la fecha correspondiente. 
+
+Visualización de Datos y Reportes: 
+
+Ofrece una pantalla de gráficos de pastel que desglosan los gastos por categoría para un período mensual determinado. 
+
+Esto permite a los usuarios identificar rápidamente en qué áreas están gastando más dinero. 
+
+Un navegador de meses permite consultar tanto el historial de presupuestos como los reportes gráficos de meses anteriores. 
+
+ 
+
+Autenticación Segura y Modo Híbrido (Online): 
+
+Implementa un sistema de registro e inicio de sesión de usuarios, comunicándose con un backend para la validación. 
+
+La sesión del usuario y el token de acceso se almacenan de forma segura en el dispositivo utilizando EncryptedSharedPreferences. 
+
+ 

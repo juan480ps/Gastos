@@ -1,11 +1,12 @@
 // CategoryRepository.kt
 
-package com.uaa.misgastosapp.repository
+package com.uaa.misgastosapp.data.repository
 
 import com.uaa.misgastosapp.data.CategoryDao
 import com.uaa.misgastosapp.data.CategoryEntity
 import com.uaa.misgastosapp.model.Category
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class CategoryRepository(private val categoryDao: CategoryDao) {
@@ -16,18 +17,15 @@ class CategoryRepository(private val categoryDao: CategoryDao) {
         }
 
     suspend fun insertCategory(name: String): Long {
-        val existingCategory = categoryDao.getAll().map { list ->
-            list.firstOrNull { it.name.equals(name, ignoreCase = true) }
-        }
-        // Este chequeo es simple, en un caso real se necesitaría una transacción o una mejor lógica
-        // Pero para el propósito, previene duplicados básicos.
-        if (existingCategory != null) {
-            // throw IllegalStateException("Category '$name' already exists.")
+        val existingCategories = allCategories.first()
+        if (existingCategories.any { it.name.equals(name, ignoreCase = true) }) {
+            throw IllegalStateException("La categoría '$name' ya existe.")
         }
         return categoryDao.insert(CategoryEntity(name = name))
     }
 
     suspend fun deleteCategory(category: Category) {
-        categoryDao.delete(CategoryEntity(id = category.id, name = category.name))
+        val entity = CategoryEntity(id = category.id, name = category.name)
+        categoryDao.delete(entity)
     }
 }
