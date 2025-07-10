@@ -1,0 +1,76 @@
+Manual de Usuario de "Mis Gastos"
+
+Esta guía te ayudará a dar tus primeros pasos y aprovechar al máximo las funcionalidades de la aplicación para tomar el control de tus finanzas personales.
+
+1. Primeros Pasos: Registro e Inicio de Sesión
+
+    Para garantizar la seguridad y privacidad de tus datos, es necesario tener una cuenta.
+
+    Registro de una Nueva Cuenta
+        Abre la aplicación por primera vez. Verás la pantalla de inicio de sesión.
+        Pulsa en el enlace "¿No tienes cuenta? Regístrate".
+        Rellena el formulario con tu nombre completo, un email válido, un nombre de usuario y una contraseña segura.
+        Pulsa el botón "Registrarse".
+        Si todo es correcto, serás redirigido a la pantalla de inicio de sesión para que puedas acceder.
+
+    Inicio de Sesión
+        En la pantalla de inicio de sesión, introduce tu email (o nombre de usuario) y tu contraseña.
+        Si deseas que la aplicación recuerde tus credenciales para futuros accesos, marca la casilla "Recordar credenciales".
+        Pulsa el botón "Iniciar Sesión".
+
+2. Pantalla Principal (Home)
+Una vez dentro, la pantalla principal te dará un resumen rápido de tu situación financiera:
+    Balance Total: Muestra la suma de todos tus ingresos y gastos registrados.
+    Resumen de Presupuestos: Muestra el estado de los presupuestos que has configurado para el mes actual.
+    Transacciones Recientes: Un listado de tus últimos movimientos, agrupados por mes. Puedes minimizar o expandir cada mes pulsando sobre el encabezado del mes para tener una vista más limpia.
+
+3. Registrar una Transacción
+Registrar tus movimientos es el corazón de la aplicación.
+    Desde la pantalla principal, pulsa el botón flotante  en la esquina inferior derecha.
+    En la pantalla "Agregar Gasto", introduce una descripción (ej: "Café con amigos").
+    Introduce el monto.
+        Para un gasto, escribe un número negativo (ej: -50.000).
+        Para un ingreso, escribe un número positivo (ej: 2.500.000).
+    Selecciona una categoría de la lista desplegable. Si la categoría no existe, puedes añadirla desde el menú de navegación principal.
+    Pulsa "Guardar". Tu transacción aparecerá inmediatamente en la lista de "Transacciones Recientes".
+
+4. Gestión de Categorías
+Organiza tus gastos creando tus propias categorías.
+    En la barra de navegación inferior, pulsa en "Categorías".
+    Verás una lista de todas tus categorías existentes.
+    Para añadir una nueva, pulsa el botón flotante +. Escribe el nombre y guarda.
+    Para eliminar una categoría, pulsa el icono de la papelera junto a su nombre.
+
+5. Creación y Seguimiento de Presupuestos
+Controla tus gastos estableciendo límites mensuales.
+    En la barra de navegación inferior, pulsa en "Presupuestos".
+    La pantalla mostrará todas tus categorías y el estado de su presupuesto para el mes actual. Puedes navegar a meses anteriores o futuros con las flechas en la parte superior.
+    Para establecer o modificar un presupuesto, pulsa el icono del lápiz (editar) junto a la categoría deseada.
+    Introduce el monto que deseas asignar como límite para esa categoría en ese mes y pulsa "Guardar".
+    Ahora, en la pantalla principal y en esta pantalla, verás una barra de progreso que te indica cuánto has gastado de tu presupuesto.
+
+6. Transacciones Recurrentes
+Automatiza tus ingresos y gastos fijos.
+    En la barra de navegación inferior, pulsa en "Recurrentes".
+    Para añadir una nueva transacción recurrente (ej: Salario, Alquiler, Netflix), pulsa el botón flotante +.
+    Completa el formulario:
+        Título: "Suscripción a Spotify".
+        Monto: 55000 (los gastos se registran como números positivos aquí).
+        Categoría: "Ocio".
+        Día del Mes: El día en que se procesará (ej: 15).
+        Fecha de Inicio y Fin (Opcional): Define el período de validez.
+
+
+    Pulsa "Añadir Recurrente". La aplicación registrará automáticamente esta transacción como un gasto cada mes en el día que especificaste.
+
+7. Ver Gráficos de Gastos
+Analiza visualmente a dónde va tu dinero.
+    En la barra de navegación inferior, pulsa en "Gráficos".
+    Verás un gráfico de pastel que desglosa tus gastos del mes actual por categoría.
+    Esto te ayuda a identificar rápidamente tus mayores áreas de gasto.
+    Al igual que en la pantalla de presupuestos, puedes usar las flechas superiores para ver los gráficos de meses pasados.
+
+8. Cerrar Sesión
+    En la pantalla principal, pulsa el icono de "Cerrar Sesión" (una puerta con una flecha) en la esquina superior derecha.
+    Confirma tu decisión en el diálogo que aparecerá. Serás devuelto a la pantalla de inicio de sesión.
+

@@ -1,38 +1,96 @@
-graph TD
-    subgraph "UI Layer"
-        direction TB
-        S[Screens / Composables<br/>HomeScreen, ChartsScreen, etc.] -->|User Events| VM[ViewModels<br/>TransactionViewModel, AuthViewModel, etc.]
-        VM -->|StateFlow State| S
-    end
-
-    subgraph "Data Layer"
-        direction TB
-        R[Repositories<br/>TransactionRepository, AuthRepository, etc.]
-        
-        subgraph "Local DataSource [SQLite]"
-            direction TB
-            D[DAOs<br/>TransactionDao, CategoryDao, etc.]
-            DB[(Room Database<br/>AppDatabase)]
-            D -->|CRUD| DB
-        end
-        
-        subgraph "Remote DataSource [Python]"
-            direction TB
-            A[API Service<br/>Retrofit - GastosApiService]
-            BE[(Backend Server)]
-            A -->|HTTP Requests| BE
-        end
-
-        R --> D
-        R --> A
-    end
-
-    VM -->|Calls Methods| R
-
-    style S fill:#cde4ff,stroke:#6495ED,stroke-width:2px
-    style VM fill:#cde4ff,stroke:#6495ED,stroke-width:2px
-    style R fill:#d5e8d4,stroke:#82b366,stroke-width:2px
-    style D fill:#f8cecc,stroke:#b85450,stroke-width:2px
-    style DB fill:#f8cecc,stroke:#b85450,stroke-width:2px
-    style A fill:#fff2cc,stroke:#d6b656,stroke-width:2px
-    style BE fill:#fff2cc,stroke:#d6b656,stroke-width:2px
+==================================================================================
+|                                                                                |
+|          DIAGRAMA DE ARQUITECTURA DETALLADO - "MIS GASTOS APP"                   |
+|                                                                                |
+==================================================================================
+|
+|   +----------------------------------------------------------------------------+
+|   |                                 UI LAYER                                   |
+|   +----------------------------------------------------------------------------+
+|   |
+|   |  [ A. Screens / Composables (en com.uaa.misgastosapp.ui) ]
+|   |    - HomeScreen.kt
+|   |    - LoginScreen.kt, RegisterScreen.kt
+|   |    - AddTransactionScreen.kt
+|   |    - CategoriesListScreen.kt, AddCategoryScreen.kt
+|   |    - ManageBudgetsScreen.kt
+|   |    - ManageRecurringTransactionsScreen.kt, AddEditRecurringTransactionScreen.kt
+|   |    - ChartsScreen.kt
+|   |    - TransactionItem.kt, SummaryCard.kt (Componentes reutilizables)
+|   |
+|   |                                  ^     |
+|   |           (Observa StateFlow)    |     | (Llama a funciones / Notifica eventos)
+|   |                                  |     v
+|   |
+|   |  [ B. ViewModels (en com.uaa.misgastosapp.ui.viewmodel) ]
+|   |    - AuthViewModel.kt
+|   |    - TransactionViewModel.kt
+|   |    - CategoryViewModel.kt
+|   |    - BudgetViewModel.kt
+|   |    - RecurringTransactionViewModel.kt
+|   |    - ChartsViewModel.kt
+|   |
+|
+|             ^                                     |
+|             | (Expone datos como StateFlow)       | (Depende de / Llama a)
+|             |                                     v
+|
+|   +----------------------------------------------------------------------------+
+|   |                                 DATA LAYER                                 |
+|   +----------------------------------------------------------------------------+
+|   |
+|   |  [ C. Repositories (en com.uaa.misgastosapp.data.repository) ]
+|   |    - AuthRepository.kt
+|   |    - TransactionRepository.kt
+|   |    - CategoryRepository.kt
+|   |    - BudgetRepository.kt
+|   |    - RecurringTransactionRepository.kt
+|   |
+|   |      /                                            \
+|   |     / (Accede a)                                     \ (Accede a)
+|   |    v                                                  v
+|   |
+|   |  [ D. Local DataSource ]                            [ E. Remote DataSource ]
+|   |  (Paquete: com.uaa.misgastosapp.data)               (Paquete: com.uaa.misgastosapp.network)
+|   |
+|   |    [ D1. DAOs (Interfaces) ]                          [ E1. API Service (Interfaz) ]
+|   |      - UserDao.kt                                       - GastosApiService.kt (con Retrofit)
+|   |      - TransactionDao.kt
+|   |      - CategoryDao.kt                                           |
+|   |      - BudgetDao.kt                                             | (Realiza llamadas HTTP/S)
+|   |      - RecurringTransactionDao.kt                               |
+|   |                                                                 v
+|   |            |                                            [ E2. Backend Server ]
+|   |            | (Operaciones CRUD)                         - (Flask/Python, Node.js, etc.)
+|   |            v                                            - Aloja la lógica de negocio remota.
+|   |
+|   |    [ D2. Room Database ]
+|   |      - AppDatabase.kt
+|   |
+|   |            ^
+|   |            | (Define las tablas)
+|   |            |
+|   |
+|   |    [ D3. Entities (Data Classes) ]
+|   |      - UserEntity.kt
+|   |      - TransactionEntity.kt
+|   |      - CategoryEntity.kt
+|   |      - BudgetEntity.kt
+|   |      - RecurringTransactionEntity.kt
+|   |
+|
+|   +----------------------------------------------------------------------------+
+|   |                            MODEL & UTILS                                   |
+|   +----------------------------------------------------------------------------+
+|   |
+|   |  [ F. Model (en com.uaa.misgastosapp.model) ]
+|   |    - Clases de datos limpias usadas por la UI y los ViewModels.
+|   |    - Transaction.kt, Category.kt, Budget.kt, RecurringTransaction.kt
+|   |
+|   |  [ G. Utils & Support ]
+|   |    - AppNavigation.kt: Define el grafo de navegación.
+|   |    - NetworkModule.kt: Configura y provee la instancia de Retrofit.
+|   |    - SecureSessionManager.kt: Gestiona la sesión de usuario de forma segura.
+|   |    - Result.kt: Sealed class para manejar estados de operaciones.
+|   |
++--------------------------------------------------------------------------------->
