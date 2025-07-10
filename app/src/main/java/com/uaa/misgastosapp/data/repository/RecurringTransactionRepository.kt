@@ -13,7 +13,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
-class RecurringTransactionRepository(
+class RecurringTransactionRepository( 
     private val recurringDao: RecurringTransactionDao,
     private val transactionDao: TransactionDao,
     private val categoryDao: CategoryDao
