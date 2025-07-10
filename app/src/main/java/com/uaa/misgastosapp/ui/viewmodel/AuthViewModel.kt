@@ -26,7 +26,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val authRepository: AuthRepository
 
     init {
-        // Inicializar NetworkModule primero para asegurar que apiService esté listo
         NetworkModule.initialize(sessionManager)
         val db = AppDatabase.getInstance(application)
         authRepository = AuthRepository(

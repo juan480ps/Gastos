@@ -66,7 +66,7 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
     ) {
         viewModelScope.launch {
             try {
-                // Las validaciones de entrada permanecen en el ViewModel
+
                 if (title.isBlank()) throw IllegalArgumentException("El título no puede estar vacío.")
                 if (amount <= 0) throw IllegalArgumentException("El monto debe ser mayor a cero.")
                 if (dayOfMonth !in 1..31) throw IllegalArgumentException("Día del mes inválido.")
@@ -81,7 +81,7 @@ class RecurringTransactionViewModel(application: Application) : AndroidViewModel
                     dayOfMonth = dayOfMonth,
                     startDate = startDate.format(formatter),
                     endDate = endDate?.format(formatter),
-                    // Se podría mover la lógica de cálculo de fecha al repositorio si se vuelve más compleja
+
                     nextDueDate = calculateNextDueDate(startDate, dayOfMonth).format(formatter),
                     isActive = isActive
                 )

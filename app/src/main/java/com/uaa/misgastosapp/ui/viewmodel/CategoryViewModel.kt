@@ -9,8 +9,11 @@ import androidx.lifecycle.viewModelScope
 import com.uaa.misgastosapp.data.AppDatabase
 import com.uaa.misgastosapp.data.repository.CategoryRepository
 import com.uaa.misgastosapp.model.Category
+import com.uaa.misgastosapp.utils.Result
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -21,6 +24,9 @@ class CategoryViewModel(application: Application) : AndroidViewModel(application
         val db = AppDatabase.getInstance(application)
         repository = CategoryRepository(db.categoryDao())
     }
+
+    private val _operationStatus = MutableStateFlow<Result<String>?>(null)
+    val operationStatus: StateFlow<Result<String>?> = _operationStatus.asStateFlow()
 
     val categories: StateFlow<List<Category>> = repository.allCategories
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
@@ -43,11 +49,18 @@ class CategoryViewModel(application: Application) : AndroidViewModel(application
     fun deleteCategory(category: Category) {
         viewModelScope.launch {
             try {
+
+                _operationStatus.value = Result.Loading
                 repository.deleteCategory(category)
+                _operationStatus.value = Result.Success("Categoría '${category.name}' eliminada.")
             } catch (e: Exception) {
                 Log.e("CategoryVM", "Error al eliminar categoría", e)
-                // Opcional: Notificar a la UI sobre el error
+                _operationStatus.value = Result.Error("No se pudo eliminar la categoría. Asegúrate de que no esté en uso por transacciones, presupuestos o gastos recurrentes.")
             }
         }
+    }
+
+    fun clearOperationStatus() {
+        _operationStatus.value = null
     }
 }

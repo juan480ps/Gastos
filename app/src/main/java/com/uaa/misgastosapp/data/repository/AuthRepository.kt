@@ -20,7 +20,7 @@ class AuthRepository(
 ) {
 
     suspend fun login(email: String, password: String): UserEntity {
-        // Lógica de API
+
         val response = apiService.login(LoginRequest(identifier = email, password = password))
         if (!response.isSuccessful || response.body() == null) {
             val errorBody = response.errorBody()?.string() ?: "Error desconocido"
@@ -30,7 +30,7 @@ class AuthRepository(
         val token = response.body()!!.accessToken
         sessionManager.saveToken(token)
 
-        // Obtener perfil después del login exitoso
+
         val profileResponse = apiService.getProfile()
         if (!profileResponse.isSuccessful || profileResponse.body() == null) {
             throw Exception("API GetProfile fallido tras login: ${profileResponse.code()}")
@@ -40,12 +40,11 @@ class AuthRepository(
         val localUser = UserEntity(
             id = profile.id,
             email = profile.email,
-            password = hashPassword(password), // Guardar hash para login offline
+            password = hashPassword(password),
             name = profile.fullName,
             createdAt = profile.createdAt
         )
 
-        // Sincronizar con la base de datos local
         userDao.insert(localUser)
 
         sessionManager.saveUserSession(
@@ -90,7 +89,6 @@ class AuthRepository(
             throw Exception("API Register fallido: ${response.code()} - $errorBody")
         }
 
-        // También guardar en la BD local para futuro login offline
         val hashedPassword = hashPassword(password)
         val newUser = UserEntity(
             email = email.lowercase(),
@@ -106,7 +104,7 @@ class AuthRepository(
             try {
                 apiService.logout()
             } catch (e: Exception) {
-                // No bloquear el logout si falla la llamada a la API
+
             }
         }
         sessionManager.logout()

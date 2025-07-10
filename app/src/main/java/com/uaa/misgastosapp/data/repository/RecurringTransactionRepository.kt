@@ -13,7 +13,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
-class RecurringTransactionRepository( 
+class RecurringTransactionRepository(
     private val recurringDao: RecurringTransactionDao,
     private val transactionDao: TransactionDao,
     private val categoryDao: CategoryDao
@@ -73,7 +73,7 @@ class RecurringTransactionRepository(
             )
 
             val newNextDueDate = calculateNextDueDate(
-                nextDueDate.plusDays(1), // Start calculation from the day after the due date
+                nextDueDate.plusDays(1),
                 item.dayOfMonth,
                 item.recurrenceType
             )
