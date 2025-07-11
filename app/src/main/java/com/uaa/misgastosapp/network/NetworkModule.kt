@@ -13,15 +13,23 @@ import java.util.concurrent.TimeUnit
 
 object NetworkModule {
     private const val BASE_URL = "http://10.0.2.2:5000/api/"
-
     private lateinit var sessionManager: SecureSessionManager
-    private lateinit var retrofit: Retrofit
-    lateinit var apiService: GastosApiService
+
+    @Volatile
+    private var retrofit: Retrofit? = null
+
+    val apiService: GastosApiService
+        get() {
+            return retrofit?.create(GastosApiService::class.java)
+                ?: throw IllegalStateException("NetworkModule not initialized")
+        }
 
     fun initialize(sessionManager: SecureSessionManager) {
-        this.sessionManager = sessionManager
-        createRetrofit()
-        Log.d("NetworkModule", "Initialized with base URL: $BASE_URL")
+        synchronized(this) {
+            this.sessionManager = sessionManager
+            createRetrofit()
+            Log.d("NetworkModule", "Initialized with base URL: $BASE_URL")
+        }
     }
 
     private fun createRetrofit() {
@@ -38,20 +46,24 @@ object NetworkModule {
 
             val path = original.url.encodedPath
             if (!path.contains("login") && !path.contains("register")) {
-                val token = sessionManager.getAccessToken()
-                if (token != null && token != "offline_mode") {
-                    Log.d("NetworkModule", "Adding token to request: Bearer $token")
-                    requestBuilder.header("Authorization", "Bearer $token")
-                } else {
-                    Log.d("NetworkModule", "No token available for: $path")
-                }
+                sessionManager.getAccessToken()?.let { token ->
+                    if (token != "offline_mode") {
+                        Log.d("NetworkModule", "Adding token to request: Bearer $token")
+                        requestBuilder.header("Authorization", "Bearer $token")
+                    }
+                } ?: Log.d("NetworkModule", "No token available for: $path")
             }
 
             val request = requestBuilder.build()
             Log.d("NetworkModule", "Request URL: ${request.url}")
             Log.d("NetworkModule", "Headers: ${request.headers}")
 
-            chain.proceed(request)
+            try {
+                chain.proceed(request)
+            } catch (e: Exception) {
+                Log.e("NetworkModule", "Request failed: ${e.message}")
+                throw e
+            }
         }
 
         val okHttpClient = OkHttpClient.Builder()
@@ -60,6 +72,8 @@ object NetworkModule {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(false)
+            .cache(null)
             .build()
 
         retrofit = Retrofit.Builder()
@@ -67,11 +81,21 @@ object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-
-        apiService = retrofit.create(GastosApiService::class.java)
     }
 
     fun updateApiClient() {
-        createRetrofit()
+        synchronized(this) {
+            Log.d("NetworkModule", "Updating ApiClient (re-creating Retrofit stack).")
+            retrofit = null
+            createRetrofit()
+        }
+    }
+
+    fun clearAuthentication() {
+        synchronized(this) {
+            Log.d("NetworkModule", "Clearing authentication (re-creating Retrofit stack).")
+            retrofit = null
+            createRetrofit()
+        }
     }
 }

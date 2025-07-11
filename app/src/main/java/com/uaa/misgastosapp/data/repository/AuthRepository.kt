@@ -3,40 +3,51 @@
 package com.uaa.misgastosapp.data.repository
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.uaa.misgastosapp.data.UserDao
 import com.uaa.misgastosapp.data.UserEntity
 import com.uaa.misgastosapp.network.GastosApiService
+import com.uaa.misgastosapp.network.NetworkModule
 import com.uaa.misgastosapp.network.model.LoginRequest
+import com.uaa.misgastosapp.network.model.LoginResponse
+import com.uaa.misgastosapp.network.model.ProfileResponse
 import com.uaa.misgastosapp.network.model.RegisterRequest
 import com.uaa.misgastosapp.utils.SecureSessionManager
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 
 class AuthRepository(
-    private val apiService: GastosApiService,
     private val userDao: UserDao,
     private val sessionManager: SecureSessionManager
 ) {
 
-    suspend fun login(email: String, password: String): UserEntity {
+    private val apiService: GastosApiService
+        get() = NetworkModule.apiService
+
+    suspend fun loginApi(email: String, password: String): LoginResponse {
+
+        sessionManager.clearToken()
+        NetworkModule.clearAuthentication()
+        delay(100)
 
         val response = apiService.login(LoginRequest(identifier = email, password = password))
         if (!response.isSuccessful || response.body() == null) {
-            val errorBody = response.errorBody()?.string() ?: "Error desconocido"
-            throw Exception("API Login fallido: ${response.code()} - $errorBody")
+            throw Exception("API Login fallido: ${response.code()} - ${response.errorBody()?.string()}")
         }
+        return response.body()!!
+    }
 
-        val token = response.body()!!.accessToken
-        sessionManager.saveToken(token)
-
-
-        val profileResponse = apiService.getProfile()
-        if (!profileResponse.isSuccessful || profileResponse.body() == null) {
-            throw Exception("API GetProfile fallido tras login: ${profileResponse.code()}")
+    suspend fun getProfileApi(): ProfileResponse {
+        val response = apiService.getProfile()
+        if (!response.isSuccessful || response.body() == null) {
+            throw Exception("API GetProfile fallido: ${response.code()} - ${response.errorBody()?.string()}")
         }
+        return response.body()!!
+    }
 
-        val profile = profileResponse.body()!!
+    suspend fun saveUserFromProfile(profile: ProfileResponse, password: String, token: String) {
         val localUser = UserEntity(
             id = profile.id,
             email = profile.email,
@@ -45,7 +56,21 @@ class AuthRepository(
             createdAt = profile.createdAt
         )
 
-        userDao.insert(localUser)
+        try {
+            val existingUser = userDao.getUserById(profile.id)
+            if (existingUser != null) {
+                userDao.update(localUser)
+            } else {
+                userDao.insert(localUser)
+            }
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error saving user, trying insert: ${e.message}")
+            try {
+                userDao.insert(localUser)
+            } catch (insertError: Exception) {
+                Log.e("AuthRepository", "Insert also failed: ${insertError.message}")
+            }
+        }
 
         sessionManager.saveUserSession(
             userId = profile.id,
@@ -54,8 +79,6 @@ class AuthRepository(
             username = profile.username,
             accessToken = token
         )
-
-        return localUser
     }
 
     suspend fun loginOffline(email: String, password: String): UserEntity {
@@ -85,8 +108,7 @@ class AuthRepository(
         )
 
         if (!response.isSuccessful) {
-            val errorBody = response.errorBody()?.string() ?: "Error desconocido"
-            throw Exception("API Register fallido: ${response.code()} - $errorBody")
+            throw Exception("API Register fallido: ${response.code()} - ${response.errorBody()?.string()}")
         }
 
         val hashedPassword = hashPassword(password)
@@ -100,14 +122,18 @@ class AuthRepository(
     }
 
     suspend fun logout() {
-        if (sessionManager.getAccessToken() != "offline_mode") {
-            try {
-                apiService.logout()
-            } catch (e: Exception) {
-
+        try {
+            if (sessionManager.getAccessToken() != "offline_mode") {
+                try {
+                    apiService.logout()
+                } catch (e: Exception) {
+                    Log.e("AuthRepository", "API logout failed, continuing with local logout", e)
+                }
             }
+        } finally {
+
+            sessionManager.logout()
         }
-        sessionManager.logout()
     }
 
     private fun hashPassword(password: String): String {

@@ -45,14 +45,24 @@ class SecureSessionManager(context: Context) {
             putString(USER_USERNAME, username)
             putString(ACCESS_TOKEN, accessToken)
             putBoolean(IS_LOGGED_IN, true)
-            apply()
+            commit()
         }
         _userIdFlow.value = userId
     }
 
     fun saveToken(token: String) {
         Log.d("SessionManager", "Saving token: ${token.take(20)}...")
-        prefs.edit().putString(ACCESS_TOKEN, token).apply()
+        prefs.edit()
+            .putString(ACCESS_TOKEN, token)
+            .commit()
+    }
+
+    fun clearToken() {
+        Log.d("SessionManager", "Clearing token")
+        prefs.edit()
+            .remove(ACCESS_TOKEN)
+            .putBoolean(IS_LOGGED_IN, false)
+            .commit()
     }
 
     fun getAccessToken(): String? {
@@ -62,7 +72,11 @@ class SecureSessionManager(context: Context) {
     }
 
     fun isLoggedIn(): Boolean {
-        return prefs.getBoolean(IS_LOGGED_IN, false) && getAccessToken() != null
+        val loggedIn = prefs.getBoolean(IS_LOGGED_IN, false)
+        val token = getAccessToken()
+        val hasValidToken = token != null && token.isNotEmpty()
+        Log.d("SessionManager", "isLoggedIn: $loggedIn, hasValidToken: $hasValidToken")
+        return loggedIn && hasValidToken
     }
 
     fun getUserId(): Int {
@@ -82,8 +96,10 @@ class SecureSessionManager(context: Context) {
     }
 
     fun logout() {
-        Log.d("SessionManager", "Clearing session")
-        prefs.edit().clear().apply()
+        Log.d("SessionManager", "Clearing session completely")
+        prefs.edit()
+            .clear()
+            .commit()
         _userIdFlow.value = 0
     }
 }

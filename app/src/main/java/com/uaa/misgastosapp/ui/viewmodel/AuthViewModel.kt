@@ -20,18 +20,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import kotlinx.coroutines.delay
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val sessionManager = SecureSessionManager(application)
     private val authRepository: AuthRepository
 
     init {
-        NetworkModule.initialize(sessionManager)
         val db = AppDatabase.getInstance(application)
         authRepository = AuthRepository(
-            apiService = NetworkModule.apiService,
             userDao = db.userDao(),
-            sessionManager = sessionManager
+            sessionManager = this.sessionManager
         )
     }
 
@@ -50,17 +49,24 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 if (email.isBlank() || password.isBlank()) {
                     onError("Por favor completa todos los campos")
-                    _isLoading.value = false
                     return@launch
                 }
 
                 if (_isOnlineMode.value) {
                     try {
-                        authRepository.login(email, password)
+                        val loginResponse = authRepository.loginApi(email, password)
+                        val token = loginResponse.accessToken
+                        sessionManager.saveToken(token)
+                        NetworkModule.updateApiClient()
+                        delay(200)
+                        val profileResponse = authRepository.getProfileApi()
+                        authRepository.saveUserFromProfile(profileResponse, password, token)
                         _isLoggedIn.value = true
+                        _isOnlineMode.value = true
                         onSuccess()
+
                     } catch (e: UnknownHostException) {
-                        Log.e("AuthVM", "Sin conexión a internet, intentando login offline.", e)
+                        Log.e("AuthVM", "Sin conexión, intentando login offline.", e)
                         _isOnlineMode.value = false
                         performOfflineLogin(email, password, onSuccess, onError)
                     } catch (e: SocketTimeoutException) {
@@ -69,7 +75,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         performOfflineLogin(email, password, onSuccess, onError)
                     } catch (e: Exception) {
                         Log.e("AuthVM", "Error en login online: ${e.message}", e)
-                        onError(parseApiErrorMessage(e.message ?: "Error desconocido"))
+                        onError(parseApiErrorMessage(e.message ?: "Ocurrió un error inesperado"))
                     }
                 } else {
                     performOfflineLogin(email, password, onSuccess, onError)
@@ -113,7 +119,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 Log.e("AuthVM", "Error en registro: ${e.message}", e)
-                onError(parseApiErrorMessage(e.message ?: "Error desconocido"))
+                onError(parseApiErrorMessage(e.message ?: "Ocurrió un error inesperado"))
             } finally {
                 _isLoading.value = false
             }
@@ -122,20 +128,44 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun logout() {
         viewModelScope.launch {
-            authRepository.logout()
-            _isLoggedIn.value = false
+            try {
+                authRepository.logout()
+                _isLoggedIn.value = false
+                _isOnlineMode.value = true
+                delay(100)
+                NetworkModule.clearAuthentication()
+
+            } catch (e: Exception) {
+                Log.e("AuthVM", "Error durante logout: ${e.message}", e)
+
+                _isLoggedIn.value = false
+                _isOnlineMode.value = true
+                sessionManager.logout()
+                NetworkModule.clearAuthentication()
+            }
         }
     }
 
     private fun parseApiErrorMessage(rawMessage: String): String {
         return try {
-            val errorBody = rawMessage.substringAfter("-").trim()
-            val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
-            error.msg ?: error.error ?: "Error del servidor"
+            if (rawMessage.contains("{") && rawMessage.contains("}")) {
+                val jsonStart = rawMessage.indexOf("{")
+                val jsonEnd = rawMessage.lastIndexOf("}") + 1
+                val jsonString = rawMessage.substring(jsonStart, jsonEnd)
+                val error = Gson().fromJson(jsonString, ErrorResponse::class.java)
+                error.msg ?: error.error ?: "Error del servidor"
+            } else {
+                when {
+                    rawMessage.contains("401") -> "Credenciales inválidas"
+                    rawMessage.contains("409") -> "El email o usuario ya existe"
+                    rawMessage.contains("500") -> "Error del servidor"
+                    rawMessage.contains("404") -> "Servicio no disponible"
+                    else -> "Ocurrió un error inesperado"
+                }
+            }
         } catch (e: Exception) {
-            if (rawMessage.contains("401")) "Credenciales inválidas"
-            else if (rawMessage.contains("409")) "El email o usuario ya existe"
-            else "Ocurrió un error inesperado"
+            Log.e("AuthVM", "Error parsing error message: ${e.message}")
+            "Ocurrió un error inesperado"
         }
     }
 
