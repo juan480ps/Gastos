@@ -33,6 +33,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.*
+import java.text.NumberFormat
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +46,11 @@ fun AddEditRecurringTransactionScreen(
 ) {
     val context = LocalContext.current
     var title by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
+
+    // Estados para el monto con formato
+    var rawAmount by remember { mutableStateOf("") }
+    var formattedAmount by remember { mutableStateOf("") }
+
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     val categories by categoryViewModel.categories.collectAsState()
@@ -56,6 +61,7 @@ fun AddEditRecurringTransactionScreen(
     var isActive by remember { mutableStateOf(true) }
     var screenTitle by remember { mutableStateOf("Añadir Recurrente") }
     val dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale("es", "ES"))
+    val numberFormatter = NumberFormat.getNumberInstance(Locale.US)
 
     LaunchedEffect(key1 = recurringTransactionId) {
         if (recurringTransactionId != null) {
@@ -63,7 +69,12 @@ fun AddEditRecurringTransactionScreen(
             recurringViewModel.getRecurringTransactionById(recurringTransactionId) { entity ->
                 entity?.let {
                     title = it.title
-                    amount = it.amount.toString().replace(".0", "")
+
+                    // Configurar el monto con formato
+                    val amountLong = it.amount.toLong()
+                    rawAmount = amountLong.toString()
+                    formattedAmount = numberFormatter.format(amountLong)
+
                     it.categoryId?.let { catId -> selectedCategory = categories.find { c -> c.id == catId } }
                     recurrenceType = it.recurrenceType
                     dayOfMonth = it.dayOfMonth.toString()
@@ -107,13 +118,31 @@ fun AddEditRecurringTransactionScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
             OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
+                value = formattedAmount,
+                onValueChange = { input ->
+                    // Remover todo lo que no sea dígito
+                    val digitsOnly = input.replace(",", "").filter { it.isDigit() }
+
+                    if (digitsOnly.isEmpty()) {
+                        rawAmount = ""
+                        formattedAmount = ""
+                    } else {
+                        // Limitar a un máximo razonable (999,999,999,999)
+                        val numericValue = digitsOnly.take(12).toLongOrNull() ?: 0L
+                        rawAmount = numericValue.toString()
+
+                        // Formatear con separadores de miles
+                        formattedAmount = numberFormatter.format(numericValue)
+                    }
+                },
                 label = { Text("Monto (PYG)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                prefix = { Text("₲ ") },
+                placeholder = { Text("0") }
             )
 
             ExposedDropdownMenuBox(
@@ -179,32 +208,46 @@ fun AddEditRecurringTransactionScreen(
 
             Button(
                 onClick = {
-                    val finalAmount = amount.toDoubleOrNull()
+                    val finalAmount = rawAmount.toDoubleOrNull()
                     val finalDayOfMonth = dayOfMonth.toIntOrNull()
 
-                    if (finalAmount == null || finalDayOfMonth == null) {
-                        Toast.makeText(context, "Monto o día del mes inválido.", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    recurringViewModel.addOrUpdateRecurringTransaction(
-                        id = recurringTransactionId,
-                        title = title,
-                        amount = finalAmount,
-                        categoryId = selectedCategory?.id,
-                        recurrenceType = recurrenceType,
-                        dayOfMonth = finalDayOfMonth,
-                        startDate = startDate,
-                        endDate = endDate,
-                        isActive = isActive,
-                        onSuccess = {
-                            Toast.makeText(context, "Guardado correctamente.", Toast.LENGTH_SHORT).show()
-                            navController.popBackStack()
-                        },
-                        onError = { errorMsg ->
-                            Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                    when {
+                        title.isBlank() -> {
+                            Toast.makeText(context, "El título no puede estar vacío.", Toast.LENGTH_SHORT).show()
                         }
-                    )
+                        rawAmount.isEmpty() -> {
+                            Toast.makeText(context, "Por favor, ingrese un monto.", Toast.LENGTH_SHORT).show()
+                        }
+                        finalAmount == null || finalAmount <= 0 -> {
+                            Toast.makeText(context, "El monto debe ser mayor a cero.", Toast.LENGTH_SHORT).show()
+                        }
+                        finalAmount > 999999999999 -> {
+                            Toast.makeText(context, "El monto es demasiado grande.", Toast.LENGTH_SHORT).show()
+                        }
+                        finalDayOfMonth == null || finalDayOfMonth !in 1..31 -> {
+                            Toast.makeText(context, "Día del mes inválido.", Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {
+                            recurringViewModel.addOrUpdateRecurringTransaction(
+                                id = recurringTransactionId,
+                                title = title,
+                                amount = finalAmount,
+                                categoryId = selectedCategory?.id,
+                                recurrenceType = recurrenceType,
+                                dayOfMonth = finalDayOfMonth,
+                                startDate = startDate,
+                                endDate = endDate,
+                                isActive = isActive,
+                                onSuccess = {
+                                    Toast.makeText(context, "Guardado correctamente.", Toast.LENGTH_SHORT).show()
+                                    navController.popBackStack()
+                                },
+                                onError = { errorMsg ->
+                                    Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
