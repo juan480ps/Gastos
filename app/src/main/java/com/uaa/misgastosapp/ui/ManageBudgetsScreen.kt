@@ -209,10 +209,26 @@ fun SetBudgetDialog(
     onDismiss: () -> Unit,
     onSetBudget: (categoryId: Int, amount: Double, monthYearStr: String) -> Unit
 ) {
-    var budgetAmountInput by remember { mutableStateOf(if (budgetInfo.amount > 0) budgetInfo.amount.toString().replace(".0", "") else "") }
+    // Estado para el valor numérico real (sin formato)
+    var rawAmount by remember {
+        mutableStateOf(
+            if (budgetInfo.amount > 0) budgetInfo.amount.toLong().toString() else ""
+        )
+    }
+
+    // Estado para el valor formateado que se muestra
+    var formattedAmount by remember {
+        mutableStateOf(
+            if (budgetInfo.amount > 0) {
+                NumberFormat.getNumberInstance(Locale.US).format(budgetInfo.amount.toLong())
+            } else ""
+        )
+    }
+
     val context = LocalContext.current
     val monthYearStr = currentMonthYear.format(DateTimeFormatter.ofPattern("yyyy-MM"))
     val monthDisplayFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
+    val numberFormatter = NumberFormat.getNumberInstance(Locale.US)
 
     Dialog(onDismissRequest = onDismiss) {
         Card {
@@ -236,13 +252,30 @@ fun SetBudgetDialog(
                 )
 
                 OutlinedTextField(
-                    value = budgetAmountInput,
-                    onValueChange = { budgetAmountInput = it.filter { char -> char.isDigit() } },
+                    value = formattedAmount,
+                    onValueChange = { input ->
+                        // Remover todo lo que no sea dígito
+                        val digitsOnly = input.replace(",", "").filter { it.isDigit() }
+
+                        if (digitsOnly.isEmpty()) {
+                            rawAmount = ""
+                            formattedAmount = ""
+                        } else {
+                            // Limitar a un máximo razonable (999,999,999,999)
+                            val numericValue = digitsOnly.take(12).toLongOrNull() ?: 0L
+                            rawAmount = numericValue.toString()
+
+                            // Formatear con separadores de miles
+                            formattedAmount = numberFormatter.format(numericValue)
+                        }
+                    },
                     label = { Text("Monto del Presupuesto (PYG)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    prefix = { Text("₲ ") }
+                    prefix = { Text("₲ ") },
+                    placeholder = { Text("0") }
                 )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -252,11 +285,20 @@ fun SetBudgetDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = {
-                        val amount = budgetAmountInput.toDoubleOrNull()
-                        if (amount == null || amount < 0) {
-                            Toast.makeText(context, "Por favor, ingrese un monto válido.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            onSetBudget(budgetInfo.categoryId, amount, monthYearStr)
+                        val amount = rawAmount.toDoubleOrNull() ?: 0.0
+                        when {
+                            rawAmount.isEmpty() -> {
+                                Toast.makeText(context, "Por favor, ingrese un monto.", Toast.LENGTH_SHORT).show()
+                            }
+                            amount < 0 -> {
+                                Toast.makeText(context, "El monto no puede ser negativo.", Toast.LENGTH_SHORT).show()
+                            }
+                            amount > 999999999999 -> {
+                                Toast.makeText(context, "El monto es demasiado grande.", Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {
+                                onSetBudget(budgetInfo.categoryId, amount, monthYearStr)
+                            }
                         }
                     }) {
                         Text("Guardar")
